@@ -1,45 +1,39 @@
 #Script associated with Hostetler and Pierce et al., 2026####
-#Last updated on 1/6/2026; 12/16/2025
-
-#As of 1/9/26:
-## work on updating Lodging and RSS figure (density plot) + add lines to other plot separating low, med, high RSS
-##work on emergence 2022 data and stats 
-#As of 1/14/26:
-##just finished figure 3, need to update text in manuscript, update root angle data in supplemental table, 
+#Last updated on 1/21/2026; 1/6/2026; 12/16/2025
 library(ggplot2)
 citation("ggplot2")
 packageVersion("ggplot2")
 library(dplyr)
 citation("dplyr")
 packageVersion("dplyr")
-library(agricolae) #HSD Test
+library(agricolae)
 citation("agricolae")
 packageVersion("agricolae")
-library(rcompanion) #transformTukey Test
+library(rcompanion)
 citation("rcompanion")
 packageVersion("rcompanion")
-library(ggtext) #coloring x axis
+library(ggtext)
 citation("ggtext")
 packageVersion("ggtext")
-library(lme4) #H2
+library(lme4)
 citation("lme4")
 packageVersion("lme4")
-library(PerformanceAnalytics) #Correlations Matrix
+library(PerformanceAnalytics)
 citation("PerformanceAnalytics")
 packageVersion("PerformanceAnalytics")
-library(corrplot) #Correlations
+library(corrplot)
 citation("corrplot")
 packageVersion("corrplot")
-library(factoextra) #get_pca_var
+library(factoextra)
 citation("factoextra")
 packageVersion("factoextra")
-library(ggfortify) #autplot
+library(ggfortify)
 citation("ggfortify")
 packageVersion("ggfortify")
-library(cowplot) #autplot
+library(cowplot)
 citation("cowplot")
 packageVersion("cowplot")
-library(tidyr) #pivotwider
+library(tidyr)
 citation("tidyr")
 packageVersion("tidyr")
 library(stringr) 
@@ -64,14 +58,14 @@ packageVersion("randomForest")
 cat("\014")
 rm(list=ls()) 
 ls() 
-setwd(dir = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Data/")
+setwd(dir = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Data/")
 getwd()
 
-#The root system stiffness varies among maize inbred genotypes####
+#Root system stiffness varies among inbred genotypes and is associated with root lodging susceptibility####
 data = read.csv("SMURFDatabase.csv", header = TRUE, na.strings = "NA")
 df = subset(data, Year == "2021")
 head(df)
-##SMURF Classifications
+##RSS Categories
 X = unique(df$Genotype)
 df1 = df
 colnames(df1)
@@ -107,7 +101,7 @@ for (i in 1:length(data12$SMURF_cat)){
 }
 head(data12)
 data12 = data12[,c(1,3)]
-#write.csv(data12, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Data/SMURFClassifications.csv", quote = F, row.names = F)
+#write.csv(data12, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Data/SMURFClassifications.csv", quote = F, row.names = F)
 df = merge(df, data12, by = "Genotype")
 data = merge(data, data12, by = "Genotype")
 head(df)
@@ -120,24 +114,22 @@ genotype_order = as.list(genotype_order)
 df$Genotype_ordered = ordered_genotypes
 head(df)
 df$SMURF_cat = factor(df$SMURF_cat, levels = c("low","average", "high"))
-Figure1=ggplot(df, aes(x = Genotype_ordered, y = line_raw_slope_N.m, fill = SMURF_cat)) +
+Figure1A=ggplot(df, aes(x = Genotype_ordered, y = line_raw_slope_N.m, fill = SMURF_cat)) +
   geom_boxplot()+
-  ylab("Root System Stiffness (N/m)")+
-  xlab("Maize Inbred Line")+
+  ylab("RSS (N/m)")+
+  xlab("Inbred Genotypes")+
   scale_y_continuous(limits=c(0,8000), breaks=seq(0,8000,1000))+
   scale_fill_manual(values = c("pink4","steelblue2", "burlywood"), labels = c("average" = "Moderate", "high" = "High", "low" = "Low"))+
   labs(fill = "RSS Category")+
   theme_bw()+
-  theme(
+  theme(legend.position = "none",
     axis.text.x = element_text(size=8, angle = 60, hjust=1),
     axis.text.y = element_text(size=8),
     axis.text = element_text(size=8),
     axis.title = element_text(face="bold", size=10),
     axis.title.x = element_text(face="bold", size=10),
     axis.title.y = element_text(face="bold", size=10))
-#pdf(file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/Figure1.pdf", width=7, height=5)
-Figure1
-#dev.off()
+Figure1A
 head(df)
 
 #Experimental Design Summary
@@ -166,7 +158,7 @@ anova(lm_x)
 lm_x_aov=aov(lm_x) 
 X = HSD.test(lm_x_aov, trt = c("Genotype"), console = TRUE)
 Means = X$means
-#write.csv(Means, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS3a.csv", row.names = TRUE)
+#write.csv(Means, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS3a.csv", row.names = TRUE)
 par(mfrow=c(2,2))
 plot(lm_x)
 par(mfrow=c(2,1))
@@ -191,16 +183,14 @@ hist(df$tukey)
 lm_x2 = lm(df$tukey ~ Genotype)
 Z = anova(lm_x2)
 Z = as.data.frame(Z)
-Z
-#write.csv(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS2.csv", row.names = TRUE)
 lm_x2_aov2=aov(lm_x2) 
 Y = HSD.test(lm_x2_aov2, trt = c("Genotype"), console = TRUE)
 Groups = Y$groups
-#write.csv(Groups, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS3b.csv", row.names = TRUE)
+#write.csv(Groups, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS3b.csv", row.names = TRUE)
 df$tukey = NULL
 detach(df)
 
-rm(list = setdiff(ls(), c("data", "df", "ordered_genotypes")))
+rm(list = setdiff(ls(), c("data", "df", "ordered_genotypes","Figure1A")))
 data1 = data %>%
   group_by(Genotype) %>%
   filter(n_distinct(Year) == 2) %>%
@@ -210,24 +200,23 @@ data1$Year = as.character(data1$Year)
 genotype_levels = levels(ordered_genotypes)
 data1$Genotype_ordered = factor(data1$Genotype, levels = genotype_levels)
 data1$SMURF_cat = factor(data1$SMURF_cat, levels = c("low","average", "high"))
-FigureS1=ggplot(data1, aes(x = Genotype_ordered, y = line_raw_slope_N.m, fill = Year)) +
+FigureS1B=ggplot(data1, aes(x = Genotype_ordered, y = line_raw_slope_N.m, fill = Year)) +
   geom_boxplot()+
   scale_fill_manual(values = c("seagreen","khaki"))+
   labs(fill = "Year")+
-  ylab("Root System Stiffness (N/m)")+
-  xlab("Maize Inbred Line")+
+  ylab("RSS (N/m)")+
+  xlab("Inbred Genotypes")+
   scale_y_continuous(limits=c(0,8000), breaks=seq(0,8000,1000))+
   theme_bw() +
-  theme(
+  theme(legend.position = "none",
     axis.text.x = element_markdown(angle = 60, hjust = 1, size = 10),
     axis.text.y = element_text(size = 10),
     axis.text = element_text(size=10),
     axis.title = element_text(face="bold", size=10),
     axis.title.x = element_text(face="bold", size=10),
     axis.title.y = element_text(face="bold", size=10))
-#pdf(file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/FigureS1.pdf", width=11, height=8.5)
-FigureS1
-#dev.off()
+FigureS1B
+
 #Experimental Design Summary
 head(data1)
 df1 = subset(data1, Year == "2020")
@@ -255,10 +244,9 @@ anova(lm_x)
 lm_x_aov=aov(lm_x) 
 X = HSD.test(lm_x_aov, trt = c("Genotype"), console = TRUE)
 Means = X$means
-#write.csv(Means, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS5a.csv", row.names = TRUE)
 X = HSD.test(lm_x_aov, trt = c("Year"), console = TRUE)
 Means = X$means
-#write.csv(Means, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS6a.csv", row.names = TRUE)
+#write.csv(Means, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS4a.csv", row.names = TRUE)
 par(mfrow=c(2,2))
 plot(lm_x)
 par(mfrow=c(2,1))
@@ -283,38 +271,56 @@ hist(data1$tukey)
 lm_x2 = lm(data1$tukey ~ Genotype*Year)
 Z = anova(lm_x2)
 Z = as.data.frame(Z)
-#write.csv(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS4.csv", row.names = TRUE)
 lm_x2_aov2=aov(lm_x2) 
 Y = HSD.test(lm_x2_aov2, trt = c("Genotype"), console = TRUE)
 Groups = Y$groups
-#write.csv(Groups, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS5b.csv", row.names = TRUE)
 Y = HSD.test(lm_x2_aov2, trt = c("Year"), console = TRUE)
 Groups = Y$groups
-#write.csv(Groups, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS6b.csv", row.names = TRUE)
+#write.csv(Groups, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS4b.csv", row.names = TRUE)
 resid = residuals(object = lm_x2_aov2)
 shapiro.test(x=resid)
 data1$tukey = NULL
 detach(data1)
+
+#Stats
+data2 = subset(data1, Year == "2020")
+attach(data2)
+lm_x = lm(line_raw_slope_N.m ~ Genotype)
+anova(lm_x)
+lm_x_aov=aov(lm_x) 
+X = HSD.test(lm_x_aov, trt = c("Genotype"), console = TRUE)
+Means = X$means
+#write.csv(Means, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS2a.csv", row.names = TRUE)
+Groups = X$groups
+Groups = as.data.frame(Groups)
+#write.csv(Groups, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS2b.csv", row.names = TRUE)
+par(mfrow=c(2,2))
+plot(lm_x)
+par(mfrow=c(2,1))
+plot(data1$line_raw_slope_N.m)
+hist(data1$line_raw_slope_N.m)
+resid = residuals(object = lm_x_aov)
+shapiro.test(x=resid)
+detach(data2)
 
 head(data1)
 geno_averages = data1 %>%
   group_by(Genotype, Year) %>%
   summarise(mean_slope = mean(line_raw_slope_N.m, na.rm = TRUE), .groups = "drop") %>%
   pivot_wider(names_from = Year, values_from = mean_slope)
-
 fit = lm(`2021` ~ `2020`, data = geno_averages)
 r2_value = summary(fit)$r.squared
 r_value = cor(geno_averages$`2020`, geno_averages$`2021`, use = "complete.obs")
-FigureS2 = ggplot(geno_averages, aes(x = `2020`, y = `2021`)) +
+FigureS1A = ggplot(geno_averages, aes(x = `2020`, y = `2021`)) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE, color = "black", fullrange = TRUE) +
   geom_text(aes(label = Genotype), color="gray50",
             vjust = -1, show.legend = FALSE )+
-  labs(x = "Average Root System Stiffness (N/m) in 2020", y = "Average Root System Stiffness (N/m) in 2021") +
+  labs(x = "Average RSS (N/m) in 2020", y = "Average RSS (N/m) in 2021") +
   scale_y_continuous(limits = c(0, 5000), breaks = seq(0, 5000, 1000)) +
   scale_x_continuous(limits = c(0, 5000), breaks = seq(0, 5000, 1000)) +
   annotate("text",
-    x = 100, y = 5000,
+    x = 150, y = 4000,
     label = paste0("r = ", round(r_value, 2), "\nR² = ", round(r2_value, 2)),
     size = 4, fontface = "bold"
   ) +
@@ -327,10 +333,7 @@ FigureS2 = ggplot(geno_averages, aes(x = `2020`, y = `2021`)) +
     axis.title.x = element_text(face = "bold", size = 10),
     axis.title.y = element_text(face = "bold", size = 10)
   )
-
-#pdf(file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/FigureS2.pdf", width=7, height=5)
-FigureS2
-#dev.off()
+FigureS1A
 
 head(geno_averages)
 geno_ranked = geno_averages %>%
@@ -345,20 +348,19 @@ geno_ranked = geno_ranked %>%
   pivot_longer(
     cols = c(rank_2020, rank_2021),
     names_to = c("Rank", "Year"),
-    names_pattern = "(.*)_(\\d+)$"
-  )
+    names_pattern = "(.*)_(\\d+)$")
 geno_ranked = geno_ranked[,c(1,3,4)]
 colnames(geno_ranked)[3] = "Rank"
 geno_ranked
 geno_ranked$Year = as.character(geno_ranked$Year)
 geno_ranked$Genotype_ordered = factor(geno_ranked$Genotype, levels = genotype_levels)
-FigureS3 = ggplot(geno_ranked, aes(x = Genotype_ordered, y = Rank, color = Year)) +
+FigureS1C = ggplot(geno_ranked, aes(x = Genotype_ordered, y = Rank, color = Year)) +
   geom_point()+
   scale_color_manual(values = c("seagreen","khaki3"))+
-  labs(x = "Genotype", y = "Rank") +
+  labs(x = "Inbred Genotypes", y = "Rank") +
   scale_y_continuous(limits = c(1, 13), breaks = seq(1, 13, 1)) +
   theme_bw() +
-  theme(
+  theme(legend.position = "none",
     axis.text.x = element_text(size = 8, angle = 60, hjust = 1),
     axis.text.y = element_text(size = 8),
     axis.text = element_text(size = 8),
@@ -366,10 +368,18 @@ FigureS3 = ggplot(geno_ranked, aes(x = Genotype_ordered, y = Rank, color = Year)
     axis.title.x = element_text(face = "bold", size = 10),
     axis.title.y = element_text(face = "bold", size = 10)
   )
-#pdf(file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/FigureS3.pdf", width=7, height=5)
-FigureS3
+FigureS1C
+#pdf(file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/FigureS1.pdf", width=8.5, height=11)
+ggdraw() +
+  draw_plot(FigureS1A, x = 0, y = 0.66, width = 1, height = 0.33) +
+  draw_plot(FigureS1B, x = 0, y = 0.33, width = 1, height = 0.33) +
+  draw_plot(FigureS1C, x = 0, y = 0, width = 1, height = 0.33) +
+  draw_plot_label(label = c("A", "B", "C"), 
+                  size = 10,
+                  x = c(0,0,0), 
+                  y = c(1,0.66,0.33))
 #dev.off()
-rm(list = setdiff(ls(), c("ordered_genotypes")))
+rm(list = setdiff(ls(), c("ordered_genotypes", "Figure1A")))
 
 data = read.csv("SMURFDatabase.csv", header = TRUE, na.strings = "NA")
 data = subset(data, Year == "2021")
@@ -379,11 +389,11 @@ df2 = read.csv("SMURFClassifications.csv", header = TRUE, na.strings = "NA")
 data = merge(data, df2, by = "Genotype")
 head(data)
 data$PL_cat = factor(data$PL_cat, levels = c("low","mid", "high"))
-FigureS4B = ggplot(data, aes(x = PL_cat, y = line_raw_slope_N.m, fill = PL_cat)) +
+Figure1C = ggplot(data, aes(x = PL_cat, y = line_raw_slope_N.m, fill = PL_cat)) +
   geom_boxplot()+
   scale_fill_manual(values = c("low" = "lightblue1", "mid" = "lightblue3", "high" = "lightblue4"), 
                     labels = c("low" = "Low", "mid" = "Moderate", "high" = "Severe")) +
-  ylab("Root System Stiffness (N/m)")+
+  ylab("RSS (N/m)")+
   xlab("Percent Lodging Category")+
   scale_x_discrete(labels = c("low" = "Low", "mid" = "Moderate", "high" = "Severe")) +
   labs(fill = "Percent Lodging Category") +
@@ -396,7 +406,8 @@ FigureS4B = ggplot(data, aes(x = PL_cat, y = line_raw_slope_N.m, fill = PL_cat))
     axis.title = element_text(face="bold", size=10),
     axis.title.x = element_text(face="bold", size=10),
     axis.title.y = element_text(face="bold", size=10))
-FigureS4B
+Figure1C
+
 #Stats
 attach(data)
 head(data)
@@ -406,7 +417,7 @@ lm_x_aov=aov(lm_x)
 X = HSD.test(lm_x_aov, trt = c("PL_cat"), console = TRUE)
 Means = X$means
 Means
-#write.csv(Means, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS8a.csv", row.names = TRUE)
+#write.csv(Means, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS5a.csv", row.names = TRUE)
 par(mfrow=c(2,2))
 plot(lm_x)
 par(mfrow=c(2,1))
@@ -432,13 +443,12 @@ par(mfrow=c(1,1))
 lm_x2 = lm(data$tukey ~ PL_cat)
 Z = anova(lm_x2)
 Z = as.data.frame(Z)
-#write.csv(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS7.csv", row.names = TRUE)
 lm_x2_aov2=aov(lm_x2) 
 resid = residuals(object = lm_x2_aov2)
 shapiro.test(x=resid)
 Y = HSD.test(lm_x2_aov2, trt = c("PL_cat"), console = TRUE)
 Groups = Y$groups
-#write.csv(Groups, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS8b.csv", row.names = TRUE)
+#write.csv(Groups, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS5b.csv", row.names = TRUE)
 data$tukey = NULL
 detach(data)
 
@@ -446,14 +456,14 @@ genotype_levels = levels(ordered_genotypes)
 data$Genotype_ordered = factor(data$Genotype, levels = genotype_levels)
 head(data)
 unique(data$Year)
-FigureS4A = ggplot(data, aes(x = Genotype_ordered, y = line_raw_slope_N.m, fill = PL_cat)) +
+Figure1B = ggplot(data, aes(x = Genotype_ordered, y = line_raw_slope_N.m, fill = PL_cat)) +
   geom_boxplot()+
   scale_fill_manual(values = c("low" = "lightblue1", "mid" = "lightblue3", "high" = "lightblue4"), 
                     labels = c("low" = "Low", "mid" = "Moderate", "high" = "Severe")) +
-  ylab("Root System Stiffness (N/m)")+
-  xlab("Percent Lodging Category")+
+  ylab("RSS (N/m)")+
+  xlab("Inbred Genotypes")+
   scale_x_discrete(labels = c("low" = "Low", "mid" = "Moderate", "high" = "Severe")) +
-  labs(fill = "Percent Lodging Category") +
+  labs(fill = "PLL Category") +
   scale_y_continuous(limits=c(0,8000), breaks=seq(0,8000,1000))+
   theme_bw()+
   theme(legend.position = "none",
@@ -463,7 +473,7 @@ FigureS4A = ggplot(data, aes(x = Genotype_ordered, y = line_raw_slope_N.m, fill 
     axis.title = element_text(face="bold", size=10),
     axis.title.x = element_text(face="bold", size=10),
     axis.title.y = element_text(face="bold", size=10))
-FigureS4A
+Figure1B
 head(data)
 data_pct = data %>%
   count(SMURF_cat, PL_cat) %>%
@@ -473,7 +483,8 @@ data_pct = data %>%
     label = scales::percent(prop, accuracy = 1),
     label = ifelse(prop < 0.05, "", label))
 data_pct$PL_cat = factor(data_pct$PL_cat, levels = c("high","mid", "low"))
-FigureS4C = ggplot(data_pct, aes(x = SMURF_cat, y = n, fill = PL_cat)) +
+data_pct$SMURF_cat = factor(data_pct$SMURF_cat, levels = c("low","average", "high"))
+Figure1D = ggplot(data_pct, aes(x = SMURF_cat, y = n, fill = PL_cat)) +
   geom_col(position = "fill") +
   geom_text(aes(label = label),position = position_fill(vjust = 0.5),size = 3,color = "black") +
   scale_y_continuous(labels = scales::percent) +
@@ -492,21 +503,21 @@ FigureS4C = ggplot(data_pct, aes(x = SMURF_cat, y = n, fill = PL_cat)) +
     axis.title = element_text(face="bold", size=10),
     axis.title.x = element_text(face="bold", size=10),
     axis.title.y = element_text(face="bold", size=10))
-FigureS4C
-#pdf(file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/FigureS4.pdf", width=8, height=6)
+Figure1D
+pdf(file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/Figure1.pdf", width=8, height=6)
 ggdraw() +
-  draw_plot(FigureS4A, x = 0, y = 0, width = 1, height = 0.50) +
-  draw_plot(FigureS4B, x = 0, y = 0.50, width = 0.50, height = 0.50) +
-  draw_plot(FigureS4C, x = 0.50, y = 0.50, width = 0.50, height = 0.50) +
-  draw_plot_label(label = c("A", "B", "C"), 
+  draw_plot(Figure1A, x = 0, y = 0.66, width = 1, height = 0.33) +
+  draw_plot(Figure1B, x = 0, y = 0.33, width = 1, height = 0.33) +
+  draw_plot(Figure1C, x = 0, y = 0, width = 0.50, height = 0.33) +
+  draw_plot(Figure1D, x = 0.50, y = 0, width = 0.50, height = 0.33) +
+  draw_plot_label(label = c("A", "B", "C","D"), 
                   size = 10,
-                  x = c(0,0.5,0), 
-                  y = c(1,1,0.55))
+                  x = c(0,0,0,0.5), 
+                  y = c(1,0.66,0.33,0.33))
+dev.off()
+rm(list=ls())
 
-#dev.off()
-rm(list=ls()) 
-
-#The root system architecture varies among maize inbreds####
+#Larger below- and above-ground root systems are associated with higher root system stiffness####
 par(mfrow=c(1,1))
 data = read.csv("RhizovisionData2017_55&Friends.csv", header = TRUE, na.strings = "NA")
 head(data)
@@ -537,12 +548,10 @@ pca3 = as.data.frame(pca$x)
 colnames(df1)
 data2 = cbind(df1, pca3)
 head(data2)
-#write.table(pca2, file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS11.csv", sep = "," , row.names = TRUE, col.names = TRUE, append = FALSE)
-#write.table(pca3, file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS12.csv", sep = "," , row.names = TRUE, col.names = TRUE, append = FALSE)
 var = get_pca_var(pca)
 data2$SMURF_cat = as.character(data2$SMURF_cat)
 data2$SMURF_cat = factor(data2$SMURF_cat, levels = c("low","average", "high"))
-#pdf(file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/FigureS6.pdf", width=7, height=5)
+#pdf(file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/FigureS3.pdf", width=7, height=5)
 autoplot(pca, data = data2, colour="SMURF_cat", 
          loadings = TRUE, loadings.colour = 'black',
          loadings.label = TRUE, loadings.label.colour = 'black', loadings.label.size = 3, loadings.label.vjust=-.1,  loadings.label.hjust=-.05,
@@ -566,7 +575,7 @@ genotype_order = readRDS("genotype_order.rds")
 data4$Genotype = factor(data4$Genotype, levels = genotype_order)
 head(data4)
 
-#pdf(file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/FigureS5.pdf", width=11, height=8.5)
+#pdf(file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/FigureS2.pdf", width=11, height=8.5)
 i = 0
 for (trait in 2:22){
   i = i+1
@@ -576,7 +585,7 @@ for (trait in 2:22){
   print(ggplot(data = data.na, aes(x=Genotype, y=data.na[,2], fill = SMURF_cat))+ 
           geom_boxplot() +
           ylab(col)+
-          xlab("Maize Inbred Line")+
+          xlab("Inbred Genotype")+
           ggtitle(alp)+
           scale_fill_manual(values = c("pink4","steelblue2", "burlywood"), limits = c("low", "average", "high"), labels = c("average" = "Moderate", "high" = "High", "low" = "Low"))+
           labs(fill = "RSS Category")+
@@ -618,28 +627,28 @@ for (i in 2:22){
   if (shap$p.value > 0.05){  
     print(shapiro.test(x=resid)$p.value)
     aov = lm(trait ~ Genotype, data = df3)
-    write.table(a, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS9.txt", sep = "\t",
+    write.table(a, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS6.txt", sep = "\t",
                 row.names = FALSE, col.names = FALSE, append=TRUE)
     anova = anova(aov)
     anova = as.data.frame(anova)
     Z = ""
-    write.table(anova, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS9.txt", sep = "\t",
+    write.table(anova, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS6.txt", sep = "\t",
                 row.names = TRUE, col.names = TRUE, append=TRUE)
-    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS9.txt", sep = "\t",
+    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS6.txt", sep = "\t",
                 row.names = FALSE, col.names = FALSE, append=TRUE)
     hsd = aov(aov)  
     hsd_test = HSD.test(hsd, trt = c("Genotype"), console = TRUE)  
     means1 = as.data.frame(hsd_test$means)
     colnames(means1)[1] = a 
-    write.table(means1, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS10a.txt", sep = "\t",
+    write.table(means1, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS6a.txt", sep = "\t",
                 row.names = TRUE, col.names = TRUE, append=TRUE)
-    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS10a.txt", sep = "\t",
+    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS6a.txt", sep = "\t",
                 row.names = FALSE, col.names = FALSE, append=TRUE)
     groups1 = as.data.frame(hsd_test$groups)
     colnames(groups1)[1] = a 
-    write.table(groups1, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS10b.txt", sep = "\t",
+    write.table(groups1, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS6b.txt", sep = "\t",
                 row.names = TRUE, col.names = TRUE, append=TRUE)
-    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS10b.txt", sep = "\t",
+    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS6b.txt", sep = "\t",
                 row.names = FALSE, col.names = FALSE, append=TRUE)
   }
   #for data that needs normalization
@@ -658,13 +667,13 @@ for (i in 2:22){
                                        returnLambda = FALSE  )
     aov = lm(norm_col_name ~ Genotype, data = df3)
     col = norm_col_name
-    write.table(col, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS9.txt", sep = "\t",
+    write.table(col, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS6.txt", sep = "\t",
                 row.names = FALSE, col.names = FALSE, append=TRUE)
     anova = anova(aov)
     anova = as.data.frame(anova)
-    write.table(anova, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS9.txt", sep = "\t",
+    write.table(anova, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS6.txt", sep = "\t",
                 row.names = TRUE, col.names = TRUE, append=TRUE)
-    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS9.txt", sep = "\t",
+    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS6.txt", sep = "\t",
                 row.names = FALSE, col.names = FALSE, append=TRUE)
     hsd = aov(aov)              
     hsd_test = HSD.test(hsd, trt = c("Genotype"), console = TRUE)  
@@ -672,27 +681,29 @@ for (i in 2:22){
     colnames(means1)[1] = col 
     groups1 = as.data.frame(hsd_test$groups)
     colnames(groups1)[1] = col 
-    write.table(groups1, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS10b.txt", sep = "\t",
+    write.table(groups1, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS6b.txt", sep = "\t",
                 row.names = TRUE, col.names = TRUE, append=TRUE)
-    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS10b.txt", sep = "\t",
+    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS6b.txt", sep = "\t",
                 row.names = FALSE, col.names = FALSE, append=TRUE)
     aov = lm(trait ~ Genotype, data = df3)
     hsd = aov(aov)  
     hsd_test = HSD.test(hsd, trt = c("Genotype"), console = TRUE)  
     means1 = as.data.frame(hsd_test$means)
     colnames(means1)[1] = a 
-    write.table(means1, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS10a.txt", sep = "\t",
+    write.table(means1, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS6a.txt", sep = "\t",
                 row.names = TRUE, col.names = TRUE, append=TRUE)
-    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS10a.txt", sep = "\t",
+    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS6a.txt", sep = "\t",
                 row.names = FALSE, col.names = FALSE, append=TRUE)
   }
 }
 
 
 head(data4)
-#pdf(file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/FigureS7.pdf", width=8, height=6)
+colnames(data4)
+trait_cols = c(2, 3, 4, 5, 7, 22)
+#pdf(file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/FigureS4.pdf", width=8, height=6)
 i = 0
-for (trait in 2:22){
+for (trait in trait_cols){
   i = i+1
   alp = LETTERS[(i)]
   data.na = data4[,c(1,trait,25)]
@@ -746,28 +757,28 @@ for (i in 1:21){
   if (shap$p.value > 0.05){  
     print(shapiro.test(x=resid)$p.value)
     aov = lm(trait ~ SMURF_cat, data = df3)
-    write.table(a, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS13.txt", sep = "\t",
+    write.table(a, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS7.txt", sep = "\t",
                 row.names = FALSE, col.names = FALSE, append=TRUE)
     anova = anova(aov)
     anova = as.data.frame(anova)
     Z = ""
-    write.table(anova, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS13.txt", sep = "\t",
+    write.table(anova, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS7.txt", sep = "\t",
                 row.names = TRUE, col.names = TRUE, append=TRUE)
-    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS13.txt", sep = "\t",
+    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS7.txt", sep = "\t",
                 row.names = FALSE, col.names = FALSE, append=TRUE)
     hsd = aov(aov)  
     hsd_test = HSD.test(hsd, trt = c("SMURF_cat"), console = TRUE)  
     means1 = as.data.frame(hsd_test$means)
     colnames(means1)[1] = a 
-    write.table(means1, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS14a.txt", sep = "\t",
+    write.table(means1, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS7a.txt", sep = "\t",
                 row.names = TRUE, col.names = TRUE, append=TRUE)
-    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS14a.txt", sep = "\t",
+    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS7a.txt", sep = "\t",
                 row.names = FALSE, col.names = FALSE, append=TRUE)
     groups1 = as.data.frame(hsd_test$groups)
     colnames(groups1)[1] = a 
-    write.table(groups1, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS14b.txt", sep = "\t",
+    write.table(groups1, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS7b.txt", sep = "\t",
                 row.names = TRUE, col.names = TRUE, append=TRUE)
-    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS14b.txt", sep = "\t",
+    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS7b.txt", sep = "\t",
                 row.names = FALSE, col.names = FALSE, append=TRUE)
   }
   #for data that needs normalization
@@ -786,30 +797,30 @@ for (i in 1:21){
                                        returnLambda = FALSE  )
     aov = lm(norm_col_name ~ SMURF_cat, data = df3)
     col = norm_col_name
-    write.table(col, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS13.txt", sep = "\t",
+    write.table(col, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS7.txt", sep = "\t",
                 row.names = FALSE, col.names = FALSE, append=TRUE)
     anova = anova(aov)
     anova = as.data.frame(anova)
-    write.table(anova, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS13.txt", sep = "\t",
+    write.table(anova, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS7.txt", sep = "\t",
                 row.names = TRUE, col.names = TRUE, append=TRUE)
-    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS13.txt", sep = "\t",
+    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS7.txt", sep = "\t",
                 row.names = FALSE, col.names = FALSE, append=TRUE)
     hsd = aov(aov)              
     hsd_test = HSD.test(hsd, trt = c("SMURF_cat"), console = TRUE)  
     groups1 = as.data.frame(hsd_test$groups)
     colnames(groups1)[1] = col 
-    write.table(groups1, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS14b.txt", sep = "\t",
+    write.table(groups1, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS7b.txt", sep = "\t",
                 row.names = TRUE, col.names = TRUE, append=TRUE)
-    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS14b.txt", sep = "\t",
+    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS7b.txt", sep = "\t",
                 row.names = FALSE, col.names = FALSE, append=TRUE)
     aov = lm(trait ~ SMURF_cat, data = df3)
     hsd = aov(aov)  
     hsd_test = HSD.test(hsd, trt = c("SMURF_cat"), console = TRUE)  
     means1 = as.data.frame(hsd_test$means)
     colnames(means1)[1] = a 
-    write.table(means1, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS14a.txt", sep = "\t",
+    write.table(means1, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS7a.txt", sep = "\t",
                 row.names = TRUE, col.names = TRUE, append=TRUE)
-    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS14a.txt", sep = "\t",
+    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS7a.txt", sep = "\t",
                 row.names = FALSE, col.names = FALSE, append=TRUE)
   }
 }
@@ -1088,7 +1099,7 @@ Figure2P = autoplot(pca, data = data2, colour="SMURF_cat",
         axis.title = element_text(face="bold", size=8),
         axis.title.x = element_text(face="bold", size=8),
         axis.title.y = element_text(face="bold", size=8))
-#pdf(file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/Figure2.pdf", width=8, height=6)
+#pdf(file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/Figure2.pdf", width=8, height=6)
 ggdraw() +
   draw_plot(Figure2P, x = 0, y = 0.75, width = 0.25, height = 0.25) +
   draw_plot(Figure2A, x = 0.25, y = 0.75, width = 0.25, height = 0.25) +
@@ -1142,12 +1153,10 @@ pca3 = as.data.frame(pca$x)
 colnames(df1)
 data2 = cbind(df1, pca3)
 head(data2)
-#write.table(pca2, file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS17.csv", sep = "," , row.names = TRUE, col.names = TRUE, append = FALSE)
-#write.table(pca3, file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS18.csv", sep = "," , row.names = TRUE, col.names = TRUE, append = FALSE)
 var = get_pca_var(pca)
 data2$SMURF_cat = as.character(data2$SMURF_cat)
 data2$SMURF_cat = factor(data2$SMURF_cat, levels = c("low","average", "high"))
-#pdf(file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/FigureS9.pdf", width=7, height=5)
+#pdf(file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/FigureS6.pdf", width=7, height=5)
 autoplot(pca, data = data2, colour="SMURF_cat", 
          loadings = TRUE, loadings.colour = 'black',
          loadings.label = TRUE, loadings.label.colour = 'black', loadings.label.size = 3, loadings.label.vjust=-.1,  loadings.label.hjust=-.05,
@@ -1160,10 +1169,48 @@ autoplot(pca, data = data2, colour="SMURF_cat",
   theme_bw()
 #dev.off()
 
+df2 = read.csv("SMURFClassifications.csv", header = TRUE, na.strings = "NA")
+data_pl = read.csv("LodgingData_55&Friends.csv", header = TRUE, na.strings = "NA")
+data = merge(data, data_pl, by = "Genotype")
+data = merge(data, df2, by = "Genotype")
+genotype_order = readRDS("genotype_order.rds")
+data$Genotype = factor(data$Genotype, levels = genotype_order)
+head(data)
+colnames(data)
+data4 = data[,c(1,2,7:11,14)]
+head(data4)
+colnames(data4)
+#pdf(file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/FigureS5.pdf", width=11, height=8.5)
+i = 0
+for (trait in 2:7){
+  i = i+1
+  alp = LETTERS[(i)]
+  data.na = data4[,c(1,trait,8)]
+  col = colnames(data4[trait])
+  print(ggplot(data = data.na, aes(x=Genotype, y=data.na[,2], fill = SMURF_cat))+ 
+          geom_boxplot() +
+          ylab(col)+
+          xlab("Inbred Genotype")+
+          ggtitle(alp)+
+          scale_fill_manual(values = c("pink4","steelblue2", "burlywood"), limits = c("low", "average", "high"), labels = c("average" = "Moderate", "high" = "High", "low" = "Low"))+
+          labs(fill = "RSS Category")+
+          theme_bw()+
+          expand_limits(y = 0)+
+          theme(
+            axis.text.x = element_text(size=8, angle = 60, hjust=1),
+            axis.text.y = element_text(size=8),
+            axis.text = element_text(size=8),
+            axis.title = element_text(face="bold", size=10),
+            axis.title.x = element_text(face="bold", size=10),
+            axis.title.y = element_text(face="bold", size=10))
+  )
+}
+#dev.off()
+
+
 head(data)
 data4 = data[,c(1:2,7:11)]
 head(data4)
-
 df2 = read.csv("SMURFClassifications.csv", header = TRUE, na.strings = "NA")
 data_pl = read.csv("LodgingData_55&Friends.csv", header = TRUE, na.strings = "NA")
 data4 = merge(data4, data_pl, by = "Genotype")
@@ -1172,35 +1219,26 @@ genotype_order = readRDS("genotype_order.rds")
 data4$Genotype = factor(data4$Genotype, levels = genotype_order)
 head(data4)
 head(data4)
-#pdf(file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/FigureS8-2.pdf", width=6, height=4 )
-i = 0
-for (trait in 2:7){
-  i = i+1
-  alp = LETTERS[(i)]
-  data.na = data4[,c(1,trait,10)]
-  col = colnames(data4[trait])
-  data.na$SMURF_cat = factor(data.na$SMURF_cat, levels = c("low","average", "high"))
-  print(ggplot(data = data.na, aes(x=SMURF_cat, y=data.na[,2], fill = SMURF_cat))+ 
-          geom_boxplot() +
-          ylab(col)+
-          xlab(NULL)+
-          scale_x_discrete(labels = c("low" = "Low", 
-                                      "average" = "Moderate", 
-                                      "high" = "High"))+
-          labs(fill = "RSS Category") +
-          ggtitle(alp)+
-          scale_fill_manual(values = c("pink4","steelblue2", "burlywood"), labels = c("average" = "Moderate", "high" = "High", "low" = "Low"))+
-          theme_bw()+
-          expand_limits(y = 0)+
-          theme(#legend.position = "none",
-                axis.text.x = element_text(size=8),
-                axis.text.y = element_text(size=8),
-                axis.text = element_text(size=8),
-                axis.title = element_text(face="bold", size=10),
-                axis.title.x = element_text(face="bold", size=10),
-                axis.title.y = element_text(face="bold", size=10))
-  )
-}
+data4$SMURF_cat = factor(data4$SMURF_cat, levels = c("low","average", "high"))
+#pdf(file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/FigureS7.pdf", width=6, height=4 )
+ggplot(data = data4, aes(x=SMURF_cat, y=num_whorls, fill = SMURF_cat))+ 
+  geom_boxplot() +
+  xlab("RSS Category")+
+  ylab("Number of Brace Root Nodes (count)")+
+  labs(fill = "RSS Category")+
+  scale_x_discrete(labels = c("low" = "Low", 
+                              "average" = "Moderate", 
+                              "high" = "High"))+
+  scale_fill_manual(values = c("pink4","steelblue2", "burlywood"), labels = c("average" = "Moderate", "high" = "High", "low" = "Low"))+
+  theme_bw()+
+  expand_limits(y = 0)+
+  theme(
+        axis.text.x = element_text(size=8),
+        axis.text.y = element_text(size=8),
+        axis.text = element_text(size=8),
+        axis.title = element_text(face="bold", size=8),
+        axis.title.x = element_text(face="bold", size=8),
+        axis.title.y = element_text(face="bold", size=8))
 #dev.off()
 head(data4)
 #Set up data frame to fill in 2
@@ -1228,28 +1266,28 @@ for (i in 1:6){
   if (shap$p.value > 0.05){  
     print(shapiro.test(x=resid)$p.value)
     aov = lm(trait ~ SMURF_cat, data = df3)
-    write.table(a, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS15.txt", sep = "\t",
+    write.table(a, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS8.txt", sep = "\t",
                 row.names = FALSE, col.names = FALSE, append=TRUE)
     anova = anova(aov)
     anova = as.data.frame(anova)
     Z = ""
-    write.table(anova, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS15.txt", sep = "\t",
+    write.table(anova, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS8.txt", sep = "\t",
                 row.names = TRUE, col.names = TRUE, append=TRUE)
-    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS15.txt", sep = "\t",
+    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS8.txt", sep = "\t",
                 row.names = FALSE, col.names = FALSE, append=TRUE)
     hsd = aov(aov)  
     hsd_test = HSD.test(hsd, trt = c("SMURF_cat"), console = TRUE)  
     means1 = as.data.frame(hsd_test$means)
     colnames(means1)[1] = a 
-    write.table(means1, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS16a.txt", sep = "\t",
+    write.table(means1, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS8a.txt", sep = "\t",
                 row.names = TRUE, col.names = TRUE, append=TRUE)
-    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS16a.txt", sep = "\t",
+    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS8a.txt", sep = "\t",
                 row.names = FALSE, col.names = FALSE, append=TRUE)
     groups1 = as.data.frame(hsd_test$groups)
     colnames(groups1)[1] = a 
-    write.table(groups1, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS16b.txt", sep = "\t",
+    write.table(groups1, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS8b.txt", sep = "\t",
                 row.names = TRUE, col.names = TRUE, append=TRUE)
-    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS16b.txt", sep = "\t",
+    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS8b.txt", sep = "\t",
                 row.names = FALSE, col.names = FALSE, append=TRUE)
   }
   #for data that needs normalization
@@ -1268,21 +1306,21 @@ for (i in 1:6){
                                        returnLambda = FALSE  )
     aov = lm(norm_col_name ~ SMURF_cat, data = df3)
     col = norm_col_name
-    write.table(col, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS15.txt", sep = "\t",
+    write.table(col, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS8.txt", sep = "\t",
                 row.names = FALSE, col.names = FALSE, append=TRUE)
     anova = anova(aov)
     anova = as.data.frame(anova)
-    write.table(anova, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS15.txt", sep = "\t",
+    write.table(anova, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS8.txt", sep = "\t",
                 row.names = TRUE, col.names = TRUE, append=TRUE)
-    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS15.txt", sep = "\t",
+    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS8.txt", sep = "\t",
                 row.names = FALSE, col.names = FALSE, append=TRUE)
     hsd = aov(aov)              
     hsd_test = HSD.test(hsd, trt = c("SMURF_cat"), console = TRUE)  
     groups1 = as.data.frame(hsd_test$groups)
     colnames(groups1)[1] = col 
-    write.table(groups1, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS16b.txt", sep = "\t",
+    write.table(groups1, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS8b.txt", sep = "\t",
                 row.names = TRUE, col.names = TRUE, append=TRUE)
-    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS16b.txt", sep = "\t",
+    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS8b.txt", sep = "\t",
                 row.names = FALSE, col.names = FALSE, append=TRUE)
     aov = lm(trait ~ SMURF_cat, data = df3)
     anova = anova(aov)
@@ -1291,18 +1329,19 @@ for (i in 1:6){
     hsd_test = HSD.test(hsd, trt = c("SMURF_cat"), console = TRUE)  
     means1 = as.data.frame(hsd_test$means)
     colnames(means1)[1] = a 
-    write.table(means1, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS16a.txt", sep = "\t",
+    write.table(means1, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS8a.txt", sep = "\t",
                 row.names = TRUE, col.names = TRUE, append=TRUE)
-    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS16a.txt", sep = "\t",
+    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS8a.txt", sep = "\t",
                 row.names = FALSE, col.names = FALSE, append=TRUE)
   }
 }
+
 colnames(data4)
 data4$SMURF_cat = factor(data4$SMURF_cat, levels = c("low","average", "high"))
 Figure3B = ggplot(data = data4, aes(x=SMURF_cat, y=root_angle_deg, fill = SMURF_cat))+ 
   geom_boxplot() +
   xlab(NULL)+
-  ylab("Root Angle (deg)")+
+  ylab("BR Angle (deg)")+
   scale_x_discrete(labels = c("low" = "Low", 
                               "average" = "Moderate", 
                               "high" = "High"))+
@@ -1336,7 +1375,7 @@ Figure3C = ggplot(data = data4, aes(x=SMURF_cat, y=stalk_width_cm, fill = SMURF_
 Figure3D = ggplot(data = data4, aes(x=SMURF_cat, y=single_root_width_cm, fill = SMURF_cat))+ 
   geom_boxplot() +
   xlab(NULL)+
-  ylab("Single Root Width (cm)")+
+  ylab("BR Width (cm)")+
   scale_x_discrete(labels = c("low" = "Low", 
                               "average" = "Moderate", 
                               "high" = "High"))+
@@ -1353,7 +1392,7 @@ Figure3D = ggplot(data = data4, aes(x=SMURF_cat, y=single_root_width_cm, fill = 
 Figure3E = ggplot(data = data4, aes(x=SMURF_cat, y=spread_width_cm, fill = SMURF_cat))+ 
   geom_boxplot() +
   xlab(NULL)+
-  ylab("Spread Width (cm)")+
+  ylab("BR Spread Width (cm)")+
   scale_x_discrete(labels = c("low" = "Low", 
                               "average" = "Moderate", 
                               "high" = "High"))+
@@ -1370,7 +1409,7 @@ Figure3E = ggplot(data = data4, aes(x=SMURF_cat, y=spread_width_cm, fill = SMURF
 Figure3F = ggplot(data = data4, aes(x=SMURF_cat, y=root_heightonstalk_cm, fill = SMURF_cat))+ 
   geom_boxplot() +
   xlab(NULL)+
-  ylab("Root Height on Stalk (cm)")+
+  ylab("BR Height on Stalk (cm)")+
   scale_x_discrete(labels = c("low" = "Low", 
                               "average" = "Moderate", 
                               "high" = "High"))+
@@ -1396,8 +1435,23 @@ Figure3A = autoplot(pca, data = data2, colour="SMURF_cat",
   theme_bw()+
   theme(legend.position = "none",
         legend.text = element_text(size = 8))
-Figure3A
-#Emergence Data#
+
+#pdf(file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/Figure3.pdf", width=7, height=5)
+ggdraw() +
+  draw_plot(Figure3A, x = 0, y = 0.725, width = 0.33, height = 0.25) +
+  draw_plot(Figure3B, x = 0.33, y = 0.725, width = 0.33, height = 0.25) +
+  draw_plot(Figure3C, x = 0.66, y = 0.725, width = 0.33, height = 0.25) +
+  draw_plot(Figure3D, x = 0, y = 0.45, width = 0.33, height = 0.25) +
+  draw_plot(Figure3E, x = 0.33, y = 0.45, width = 0.33, height = 0.25) +
+  draw_plot(Figure3F, x = 0.66, y = 0.45, width = 0.33, height = 0.25) +
+  draw_plot_label(label = c("A", "B", "C", "D","E","F"), 
+                  size = 10,
+                  x = c(0,0.33,0.66,0,0.33,0.66), 
+                  y = c(1,1,1,0.75,0.75,0.75))
+#dev.off()
+rm(list=ls()) 
+
+#Delayed brace root emergence is associated with higher root system stiffness####
 cat("\014")
 data = read.csv("Emergence_Data_55Friends_2021.csv", header = TRUE, na.strings = "NA")
 head(data)
@@ -1464,15 +1518,14 @@ genotype_order = readRDS("genotype_order.rds")
 data$Genotype = factor(data$Genotype, levels = genotype_order)
 head(data)
 
-#pdf(file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/FigureS10.pdf", width=11, height=8.5)
-ggplot(data, aes(x = Genotype, y = DAP, color = SMURF_cat, fill = Year)) +
+#pdf(file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/FigureS8.pdf", width=11, height=8.5)
+ggplot(data, aes(x = Genotype, y = DAP, fill = SMURF_cat)) +
   geom_boxplot()+
   ylab("Brace Root Emergence (dap)")+
-  xlab("Maize Inbred")+
+  xlab("Inbred Genotype")+
   scale_y_continuous(limits=c(0,65), breaks=seq(0,65,7))+
-  scale_color_manual(values = c("pink4","steelblue2", "burlywood"), labels = c("average" = "Moderate", "high" = "High", "low" = "Low"))+
-  scale_fill_manual(values = c("gray20","gray80"))+
-  labs(fill = "Year", color = "RSS Category")+
+  scale_fill_manual(values = c("pink4","steelblue2", "burlywood"), labels = c("average" = "Moderate", "high" = "High", "low" = "Low"))+
+  labs(fill = "RSS Category")+
   theme_bw()+
   theme(
     axis.text.x = element_text(size=8, angle = 60, hjust=1),
@@ -1480,8 +1533,10 @@ ggplot(data, aes(x = Genotype, y = DAP, color = SMURF_cat, fill = Year)) +
     axis.text = element_text(size=8),
     axis.title = element_text(face="bold", size=10),
     axis.title.x = element_text(face="bold", size=10),
-    axis.title.y = element_text(face="bold", size=10))
+    axis.title.y = element_text(face="bold", size=10))+
+  facet_wrap(~Year, nrow=2)
 #dev.off()
+#Stats
 attach(data)
 head(data)
 lm_x = lm(DAP ~ Genotype*Year)
@@ -1489,7 +1544,7 @@ anova(lm_x)
 lm_x_aov=aov(lm_x) 
 X = HSD.test(lm_x_aov, trt = c("Genotype","Year"), console = TRUE)
 Means = X$means
-#write.csv(Means, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS20b.csv", row.names = TRUE)
+#write.csv(Means, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS9.csv", row.names = TRUE)
 par(mfrow=c(2,2))
 plot(lm_x)
 par(mfrow=c(2,1))
@@ -1515,17 +1570,17 @@ lm_x2 = lm(data$tukey ~ Genotype*Year)
 Z = anova(lm_x2)
 Z = as.data.frame(Z)
 Z
-#write.csv(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS19.csv", row.names = TRUE)
+#write.csv(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS9.csv", row.names = TRUE)
 lm_x2_aov2=aov(lm_x2) 
 Y = HSD.test(lm_x2_aov2, trt = c("Genotype","Year"), console = TRUE)
 Groups = Y$groups
-#write.csv(Groups, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS20a.csv", row.names = TRUE)
+#write.csv(Groups, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS9a.csv", row.names = TRUE)
 data$tukey = NULL
 detach(data)
 
 head(data)
 data$SMURF_cat = factor(data$SMURF_cat, levels = c("low","average", "high"))
-Figure3G = ggplot(data, aes(x = SMURF_cat, y = DAP, fill = SMURF_cat)) +
+Figure4A = ggplot(data, aes(x = SMURF_cat, y = DAP, fill = SMURF_cat)) +
   geom_boxplot()+
   ylab("Brace Root Emergence (dap)")+
   xlab(NULL)+
@@ -1543,7 +1598,7 @@ Figure3G = ggplot(data, aes(x = SMURF_cat, y = DAP, fill = SMURF_cat)) +
         axis.title = element_text(face="bold", size=8),
         axis.title.x = element_text(face="bold", size=8),
         axis.title.y = element_text(face="bold", size=8))
-Figure3G
+Figure4A
 attach(data)
 head(data)
 lm_x = lm(DAP ~ SMURF_cat*Year)
@@ -1551,10 +1606,10 @@ anova(lm_x)
 lm_x_aov=aov(lm_x) 
 X = HSD.test(lm_x_aov, trt = c("SMURF_cat"), console = TRUE)
 Means = X$means
-#write.csv(Means, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS22a.csv", row.names = TRUE)
+#write.csv(Means, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS10a.csv", row.names = TRUE)
 X = HSD.test(lm_x_aov, trt = c("Year"), console = TRUE)
 Means = X$means
-#write.csv(Means, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS22a-2.csv", row.names = TRUE)
+#write.csv(Means, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS10b.csv", row.names = TRUE)
 par(mfrow=c(2,2))
 plot(lm_x)
 par(mfrow=c(2,1))
@@ -1580,16 +1635,17 @@ lm_x2 = lm(data$tukey ~ SMURF_cat*Year)
 Z = anova(lm_x2)
 Z = as.data.frame(Z)
 Z
-#write.csv(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS21.csv", row.names = TRUE)
+#write.csv(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS10.csv", row.names = TRUE)
 lm_x2_aov2=aov(lm_x2) 
 Y = HSD.test(lm_x2_aov2, trt = c("SMURF_cat"), console = TRUE)
 Groups = Y$groups
-#write.csv(Groups, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS22b.csv", row.names = TRUE)
+#write.csv(Groups, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS10c.csv", row.names = TRUE)
 data$tukey = NULL
 detach(data)
+
 head(data)
 data$Leaf.count = as.numeric(data$Leaf.count)
-FigureS11B = ggplot(data, aes(x = SMURF_cat, y = Leaf.count, fill = SMURF_cat)) +
+Figure4B = ggplot(data, aes(x = SMURF_cat, y = Leaf.count, fill = SMURF_cat)) +
   geom_boxplot()+
   ylab("Leaf Number (count)")+
   xlab(NULL)+
@@ -1607,7 +1663,7 @@ FigureS11B = ggplot(data, aes(x = SMURF_cat, y = Leaf.count, fill = SMURF_cat)) 
         axis.title = element_text(face="bold", size=8),
         axis.title.x = element_text(face="bold", size=8),
         axis.title.y = element_text(face="bold", size=8))
-FigureS11C = ggplot(data, aes(x = DAP, y = Leaf.count, color = SMURF_cat)) +
+Figure4C = ggplot(data, aes(x = DAP, y = Leaf.count, color = SMURF_cat)) +
   geom_point(size=1)+
   ylab("Leaf Number (count)")+
   xlab("Brace Root Emergence (dap)")+
@@ -1622,50 +1678,105 @@ FigureS11C = ggplot(data, aes(x = DAP, y = Leaf.count, color = SMURF_cat)) +
         axis.title = element_text(face="bold", size=8),
         axis.title.x = element_text(face="bold", size=8),
         axis.title.y = element_text(face="bold", size=8))
-#pdf(file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/FigureS11.pdf", width=8, height=6)
-ggdraw() +
-  draw_plot(Figure3G, x = 0, y = 0.66, width = 0.5, height = 0.33) +
-  draw_plot(FigureS11B, x = 0.50, y = 0.66, width = 0.5, height = 0.33) +
-  draw_plot(FigureS11C, x = 0, y = 0.33, width = 0.66, height = 0.33) +
-  draw_plot_label(label = c("A", "B", "C"), 
-                  size = 10,
-                  x = c(0,0.50,0), 
-                  y = c(1,1,0.70))
-#dev.off()
 
-#pdf(file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/Figure3-3.pdf", width=7, height=5)
-ggdraw() +
-  draw_plot(Figure3A, x = 0, y = 0.75, width = 0.25, height = 0.25) +
-  draw_plot(Figure3B, x = 0.25, y = 0.75, width = 0.25, height = 0.25) +
-  draw_plot(Figure3C, x = 0.50, y = 0.75, width = 0.25, height = 0.25) +
-  draw_plot(Figure3D, x = 0, y = 0.50, width = 0.25, height = 0.25) +
-  draw_plot(Figure3E, x = 0.25, y = 0.50, width = 0.25, height = 0.25) +
-  draw_plot(Figure3F, x = 0.50, y = 0.50, width = 0.25, height = 0.25) +
-  draw_plot(Figure3G, x = 0.75, y = 0.50, width = 0.25, height = 0.25) +
-  draw_plot_label(label = c("A", "B", "C", "D","E","F","G"), 
-                  size = 10,
-                  x = c(0,0.25,0.50,0,0.25,0.50,0.75), 
-                  y = c(1,1,1,0.75,0.75,0.75,0.75))
-#dev.off()
+head(data)
+attach(data)
+head(data)
+lm_x = lm(Leaf.count ~ SMURF_cat*Year)
+anova(lm_x)
+lm_x_aov=aov(lm_x) 
+X = HSD.test(lm_x_aov, trt = c("SMURF_cat"), console = TRUE)
+Means = X$means
+X = HSD.test(lm_x_aov, trt = c("Year"), console = TRUE)
+Means = X$means
+par(mfrow=c(2,2))
+plot(lm_x)
+par(mfrow=c(2,1))
+plot(data$Leaf.count)
+hist(data$Leaf.count)
+resid = residuals(object = lm_x_aov)
+shapiro.test(x=resid)
+#transformation data to meet assumptions
+par(mfrow=c(2,2))
+data$tukey = transformTukey(
+  data$Leaf.count,
+  start = -10,
+  end = 10,
+  int = 0.025,
+  plotit = TRUE,
+  verbose = FALSE,
+  quiet = FALSE,
+  statistic = 1,
+  returnLambda = FALSE
+)
+hist(data$tukey)
+lm_x2 = lm(data$tukey ~ SMURF_cat*Year)
+Z = anova(lm_x2)
+Z = as.data.frame(Z)
+Z
+lm_x2_aov2=aov(lm_x2) 
+Y = HSD.test(lm_x2_aov2, trt = c("SMURF_cat"), console = TRUE)
+Groups = Y$groups
+data$tukey = NULL
+detach(data)
+
 head(data)
 dap_variability = data %>%
-  group_by(Genotype, Year) %>%
+  group_by(Genotype) %>%
   summarise(
-    Mean_DAP = mean(DAP, na.rm = TRUE),
-    SD_DAP = sd(DAP, na.rm = TRUE),
-    Min_DAP = min(DAP, na.rm = TRUE),
-    Max_DAP = max(DAP, na.rm = TRUE),
-    Range_DAP = Max_DAP - Min_DAP
-  )
+    Mean_DAP = mean(DAP, na.rm = TRUE))
 dap_variability = as.data.frame(dap_variability)
-View(dap_variability)
-data %>%
-  summarise(
-    mean_DAP = mean(DAP, na.rm = TRUE),
-    sd_DAP   = sd(DAP, na.rm = TRUE)
-  )
 
-#Brace root mechanical variation is driven by geometry #####
+data = read.csv("RhizovisionData2017_55&Friends.csv", header = TRUE, na.strings = "NA")
+head(data)
+colnames(data)
+data = data[,c(1,22)]
+df1 = data %>%
+  group_by(Genotype) %>%
+  summarise(across(1, list(mean = ~mean(. , na.rm = TRUE))))
+df1 = as.data.frame(df1)
+head(df1)
+df2 = read.csv("SMURFClassifications.csv", header = TRUE, na.strings = "NA")
+data_pl = read.csv("LodgingData_55&Friends.csv", header = TRUE, na.strings = "NA")
+df1 = merge(df1, data_pl, by = "Genotype")
+df1 = merge(df1, df2, by = "Genotype")
+df1 = merge(df1, dap_variability, by = "Genotype")
+head(df1)
+colnames(df1)[2] = "ConvexArea_cm2"
+colnames(df1)[6] = "BR_Emergence_DAP"
+df1$SMURF_cat = factor(df1$SMURF_cat, levels = c("low","average", "high"))
+
+Figure4D = ggplot(df1, aes(x = BR_Emergence_DAP, y = ConvexArea_cm2, color = SMURF_cat)) +
+  geom_point(size=1)+
+  ylab("Convex Area (cm2)")+
+  xlab("Brace Root Emergence (dap)")+
+  expand_limits(y = 0, x=0)+
+  scale_color_manual(values = c("pink4","steelblue2", "burlywood"), labels = c("average" = "Moderate", "high" = "High", "low" = "Low"))+
+  labs(color = "RSS Category")+
+  theme_bw()+
+  theme(legend.position = "none",
+        axis.text.x = element_text(size=8),
+        axis.text.y = element_text(size=8),
+        axis.text = element_text(size=8),
+        axis.title = element_text(face="bold", size=8),
+        axis.title.x = element_text(face="bold", size=8),
+        axis.title.y = element_text(face="bold", size=8))+
+  facet_grid(~SMURF_cat, labeller = as_labeller(c( average = "Moderate", high = "High", low = "Low")))
+Figure4D
+
+#pdf(file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/Figure4.pdf", width=8, height=6)
+ggdraw() +
+  draw_plot(Figure4A, x = 0, y = 0.70, width = 0.33, height = 0.25) +
+  draw_plot(Figure4B, x = 0.35, y = 0.70, width = 0.33, height = 0.25) +
+  draw_plot(Figure4C, x = 0, y = 0.40, width = 0.33, height = 0.25) +
+  draw_plot(Figure4D, x = 0.35, y = 0.40, width = 0.33, height = 0.25) +
+  draw_plot_label(label = c("A", "B", "C", "D"), 
+                  size = 10,
+                  x = c(0,0.34,0,0.34), 
+                  y = c(1,1,0.70,0.70))
+#dev.off()
+
+#Brace root structural stiffness is associated with root system stiffness and driven by the changes in geometry #####
 rm(list=ls()) 
 cat("\014")
 data1 = read.csv("BRW_55Friends.csv", header = TRUE, na.strings = "NA")
@@ -1758,7 +1869,7 @@ id_labels = c(
   "BRNode1" = "Node 1 (Closest to Soil)"
 )
 head(df)
-#pdf(file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/FigureS12.pdf", width=11, height=8.5)
+#pdf(file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/FigureS9.pdf", width=11, height=8.5)
 ggplot(df, aes(x = Genotype, y = K_N.mm, fill = SMURF_cat)) +
   geom_boxplot()+
   ylab("K (N/mm)")+
@@ -1845,6 +1956,7 @@ ggplot(df, aes(x = Genotype, y = E_GPa, fill = SMURF_cat)) +
     axis.title.y = element_text(face="bold", size=10))+
   facet_wrap(~WR_ID, labeller = labeller(WR_ID = id_labels), ncol=1)
 #dev.off()
+
 #Set up data frame to fill in 2
 SW = matrix(NA,nrow=2,ncol=2)
 rownames(SW) = c("W","pvalue")
@@ -1870,22 +1982,22 @@ for (i in 1:5){
   if (shap$p.value > 0.05){  
     print(shapiro.test(x=resid)$p.value)
     aov = lm(trait ~ Genotype*WR_ID, data = df3)
-    write.table(a, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS23.txt", sep = "\t",
+    write.table(a, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS11.txt", sep = "\t",
                 row.names = FALSE, col.names = FALSE, append=TRUE)
     anova = anova(aov)
     anova = as.data.frame(anova)
     Z = ""
-    write.table(anova, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS23.txt", sep = "\t",
+    write.table(anova, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS11.txt", sep = "\t",
                 row.names = TRUE, col.names = TRUE, append=TRUE)
-    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS23.txt", sep = "\t",
+    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS11.txt", sep = "\t",
                 row.names = FALSE, col.names = FALSE, append=TRUE)
     hsd = aov(aov)  
     hsd_test = HSD.test(hsd, trt = c("WR_ID","Genotype"), console = TRUE)  
     groups1 = as.data.frame(hsd_test$groups)
     colnames(groups1)[1] = a 
-    write.table(groups1, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS24b.txt", sep = "\t",
+    write.table(groups1, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS11b.txt", sep = "\t",
                 row.names = TRUE, col.names = TRUE, append=TRUE)
-    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS24b.txt", sep = "\t",
+    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS11b.txt", sep = "\t",
                 row.names = FALSE, col.names = FALSE, append=TRUE)
   }
   #for data that needs normalization
@@ -1904,26 +2016,26 @@ for (i in 1:5){
                                        returnLambda = FALSE  )
     aov = lm(norm_col_name ~ Genotype*WR_ID, data = df3)
     col = norm_col_name
-    write.table(col, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS23.txt", sep = "\t",
+    write.table(col, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS11.txt", sep = "\t",
                 row.names = FALSE, col.names = FALSE, append=TRUE)
     anova = anova(aov)
     anova = as.data.frame(anova)
-    write.table(anova, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS23.txt", sep = "\t",
+    write.table(anova, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS11.txt", sep = "\t",
                 row.names = TRUE, col.names = TRUE, append=TRUE)
-    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS23.txt", sep = "\t",
+    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS11.txt", sep = "\t",
                 row.names = FALSE, col.names = FALSE, append=TRUE)
     hsd = aov(aov)              
     hsd_test = HSD.test(hsd, trt = c("WR_ID","Genotype"), console = TRUE)
     groups1 = as.data.frame(hsd_test$groups)
     colnames(groups1)[1] = col 
-    write.table(groups1, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS24b.txt", sep = "\t",
+    write.table(groups1, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS11b.txt", sep = "\t",
                 row.names = TRUE, col.names = TRUE, append=TRUE)
-    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS24b.txt", sep = "\t",
+    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS11b.txt", sep = "\t",
                 row.names = FALSE, col.names = FALSE, append=TRUE)
   }
 }
 traits = colnames(df2)[1:5] 
-outfile = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS24a.txt"
+outfile = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS11a.txt"
 for (trait in traits) {
   temp_summary = df2 %>%
     group_by(Genotype, WR_ID) %>%
@@ -1958,7 +2070,8 @@ for (trait in traits) {
   write.table(temp_summary, file = outfile, append = TRUE, sep = "\t", row.names = FALSE, quote = FALSE)
 }
 
-#pdf(file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/FigureS13.pdf", width=6, height=4)
+
+#pdf(file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/FigureS13.pdf", width=6, height=4)
 ggplot(df, aes(x = SMURF_cat, y = K_N.mm, fill = SMURF_cat)) +
   geom_boxplot()+
   ylab("K (N/mm)")+
@@ -2086,30 +2199,30 @@ for (i in 1:5){
   if (shap$p.value > 0.05){  
     print(shapiro.test(x=resid)$p.value)
     aov = lm(trait ~ SMURF_cat*WR_ID, data = df3)
-    write.table(a, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS25.txt", sep = "\t",
+    write.table(a, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS12.txt", sep = "\t",
                 row.names = FALSE, col.names = FALSE, append=TRUE)
     anova = anova(aov)
     anova = as.data.frame(anova)
     Z = ""
-    write.table(anova, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS25.txt", sep = "\t",
+    write.table(anova, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS12.txt", sep = "\t",
                 row.names = TRUE, col.names = TRUE, append=TRUE)
-    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS25.txt", sep = "\t",
+    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS12.txt", sep = "\t",
                 row.names = FALSE, col.names = FALSE, append=TRUE)
     hsd = aov(aov)  
     hsd_test = HSD.test(hsd, trt = c("SMURF_cat"), console = TRUE)  
     groups1 = as.data.frame(hsd_test$groups)
     colnames(groups1)[1] = a 
-    write.table(groups1, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS26b.txt", sep = "\t",
+    write.table(groups1, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS12b.txt", sep = "\t",
                 row.names = TRUE, col.names = TRUE, append=TRUE)
-    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS26b.txt", sep = "\t",
+    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS12b.txt", sep = "\t",
                 row.names = FALSE, col.names = FALSE, append=TRUE)
     
     hsd_test = HSD.test(hsd, trt = c("WR_ID"), console = TRUE)  
     groups1 = as.data.frame(hsd_test$groups)
     colnames(groups1)[1] = a 
-    write.table(groups1, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS27b.txt", sep = "\t",
+    write.table(groups1, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS13b.txt", sep = "\t",
                 row.names = TRUE, col.names = TRUE, append=TRUE)
-    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS27b.txt", sep = "\t",
+    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS13b.txt", sep = "\t",
                 row.names = FALSE, col.names = FALSE, append=TRUE)
   }
   #for data that needs normalization
@@ -2128,34 +2241,34 @@ for (i in 1:5){
                                        returnLambda = FALSE  )
     aov = lm(norm_col_name ~ SMURF_cat*WR_ID, data = df3)
     col = norm_col_name
-    write.table(col, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS25.txt", sep = "\t",
+    write.table(col, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS12.txt", sep = "\t",
                 row.names = FALSE, col.names = FALSE, append=TRUE)
     anova = anova(aov)
     anova = as.data.frame(anova)
-    write.table(anova, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS25.txt", sep = "\t",
+    write.table(anova, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS12.txt", sep = "\t",
                 row.names = TRUE, col.names = TRUE, append=TRUE)
-    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS25.txt", sep = "\t",
+    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS12.txt", sep = "\t",
                 row.names = FALSE, col.names = FALSE, append=TRUE)
     hsd = aov(aov)              
     hsd_test = HSD.test(hsd, trt = c("SMURF_cat"), console = TRUE)
     groups1 = as.data.frame(hsd_test$groups)
     colnames(groups1)[1] = col 
-    write.table(groups1, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS26b.txt", sep = "\t",
+    write.table(groups1, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS12b.txt", sep = "\t",
                 row.names = TRUE, col.names = TRUE, append=TRUE)
-    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS26b.txt", sep = "\t",
+    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS12b.txt", sep = "\t",
                 row.names = FALSE, col.names = FALSE, append=TRUE)
     hsd_test = HSD.test(hsd, trt = c("WR_ID"), console = TRUE)
     groups1 = as.data.frame(hsd_test$groups)
     colnames(groups1)[1] = col 
-    write.table(groups1, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS27b.txt", sep = "\t",
+    write.table(groups1, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS13b.txt", sep = "\t",
                 row.names = TRUE, col.names = TRUE, append=TRUE)
-    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS27b.txt", sep = "\t",
+    write.table(Z, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS13b.txt", sep = "\t",
                 row.names = FALSE, col.names = FALSE, append=TRUE)
   }
 }
 head(df2)
 traits = colnames(df2)[1:5] 
-outfile = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS26a.txt"
+outfile = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS12a.txt"
 for (trait in traits) {
   temp_summary = df2 %>%
     group_by(SMURF_cat) %>%
@@ -2178,7 +2291,7 @@ for (trait in traits) {
   write.table(temp_summary, file = outfile, append = TRUE, sep = "\t", row.names = FALSE, quote = FALSE)
 }
 traits = colnames(df2)[1:5] 
-outfile = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS27a.txt"
+outfile = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS13a.txt"
 for (trait in traits) {
   temp_summary = df2 %>%
     group_by(WR_ID) %>%
@@ -2201,8 +2314,9 @@ for (trait in traits) {
 }
 
 head(df)
+
 df4 = subset(df, WR_ID == "BRNode1")
-Figure4A = ggplot(df4, aes(x = SMURF_cat, y = K_N.mm, fill = SMURF_cat)) +
+Figure5A = ggplot(df4, aes(x = SMURF_cat, y = K_N.mm, fill = SMURF_cat)) +
   geom_boxplot()+
   ylab("K (N/mm)")+
   xlab("Root System Stiffness Category")+
@@ -2218,7 +2332,7 @@ Figure4A = ggplot(df4, aes(x = SMURF_cat, y = K_N.mm, fill = SMURF_cat)) +
         axis.title = element_text(face="bold", size=10),
         axis.title.x = element_text(face="bold", size=10),
         axis.title.y = element_text(face="bold", size=10))
-Figure4B = ggplot(df4, aes(x = SMURF_cat, y = I_mm4, fill = SMURF_cat)) +
+Figure5B = ggplot(df4, aes(x = SMURF_cat, y = I_mm4, fill = SMURF_cat)) +
   geom_boxplot()+
   ylab("I (mm4)")+
   xlab("Root System Stiffness Category")+
@@ -2234,13 +2348,13 @@ Figure4B = ggplot(df4, aes(x = SMURF_cat, y = I_mm4, fill = SMURF_cat)) +
         axis.title = element_text(face="bold", size=10),
         axis.title.x = element_text(face="bold", size=10),
         axis.title.y = element_text(face="bold", size=10))
-#pdf(file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/Figure4.pdf", width=6, height=4)
+#pdf(file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/Figure5.pdf", width=8, height=6)
 ggdraw() +
-  draw_plot(Figure4A, x = 0, y = 0, width = 0.5, height = 1) +
-  draw_plot(Figure4B, x = 0.5, y = 0, width = 0.5, height = 1) +
+  draw_plot(Figure5A, x = 0, y = 0.65, width = 0.33, height = 0.33) +
+  draw_plot(Figure5B, x = 0.33, y = 0.65, width = 0.33, height = 0.33) +
   draw_plot_label(label = c("A", "B"), 
                   size = 10,
-                  x = c(0,0.5), 
+                  x = c(0,0.33), 
                   y = c(1,1))
 #dev.off()
 
@@ -2453,32 +2567,32 @@ var_names = levels(var_imp_df$variable)
 var_names
 var_imp_df = var_imp_df %>%
   mutate(DataType = recode(DataType,
-                        "median_diameter" =  "Belowground Architecture", 
-                        "spread_width" = "Aboveground Architecture",     
-                        "average_diameter" =  "Belowground Architecture",       
-                        "root_angle" = "Aboveground Architecture",    
-                        "depth" =   "Belowground Architecture",        
-                        "i_br_node1" = "Aboveground Mechanics",             
-                        "solidity" = "Belowground Architecture",            
-                        "e_br_node1" =  "Aboveground Mechanics",          
-                        "e_br_node2"  =  "Aboveground Mechanics",          
-                        "k_br_node2" = "Aboveground Mechanics",          
-                        "root_heightonstalk" ="Aboveground Architecture",      
-                        "k_br_node1" =  "Aboveground Mechanics",   
-                        "i_br_node2" = "Aboveground Mechanics",           
-                        "single_root_width" = "Aboveground Architecture",
-                        "perimeter" =  "Belowground Architecture",   
-                        "convex_area" = "Belowground Architecture",
-                        "stalk_width"  = "Aboveground Architecture",          
-                        "max_width" = "Belowground Architecture",         
-                        "steep_angle_frequency"  = "Belowground Architecture",          
-                        "volume" =  "Belowground Architecture",                        
-                        "total_rl" = "Belowground Architecture",                        
-                        "lower_root_area" = "Belowground Architecture",                 
-                        "max_diameter" = "Belowground Architecture",                    
-                        "network_area" = "Belowground Architecture",                   
-                        "surface_area" = "Belowground Architecture",                    
-                        "medium_angle_frequency" = "Belowground Architecture"))
+                        "median_diameter" =  "Below-ground Architecture", 
+                        "spread_width" = "Above-ground Architecture",     
+                        "average_diameter" =  "Below-ground Architecture",       
+                        "root_angle" = "Above-ground Architecture",    
+                        "depth" =   "Below-ground Architecture",        
+                        "i_br_node1" = "Above-ground Mechanics",             
+                        "solidity" = "Below-ground Architecture",            
+                        "e_br_node1" =  "Above-ground Mechanics",          
+                        "e_br_node2"  =  "Above-ground Mechanics",          
+                        "k_br_node2" = "Above-ground Mechanics",          
+                        "root_heightonstalk" ="Above-ground Architecture",      
+                        "k_br_node1" =  "Above-ground Mechanics",   
+                        "i_br_node2" = "Above-ground Mechanics",           
+                        "single_root_width" = "Above-ground Architecture",
+                        "perimeter" =  "Below-ground Architecture",   
+                        "convex_area" = "Below-ground Architecture",
+                        "stalk_width"  = "Above-ground Architecture",          
+                        "max_width" = "Below-ground Architecture",         
+                        "steep_angle_frequency"  = "Below-ground Architecture",          
+                        "volume" =  "Below-ground Architecture",                        
+                        "total_rl" = "Below-ground Architecture",                        
+                        "lower_root_area" = "Below-ground Architecture",                 
+                        "max_diameter" = "Below-ground Architecture",                    
+                        "network_area" = "Below-ground Architecture",                   
+                        "surface_area" = "Below-ground Architecture",                    
+                        "medium_angle_frequency" = "Below-ground Architecture"))
 head(var_imp_df)
 var_imp_df = var_imp_df %>%
   mutate(variable = factor(variable, levels = variable))
@@ -2486,8 +2600,8 @@ var_imp_df = var_imp_df %>%
   arrange(importance) %>%
   mutate(y_pos = row_number())
 y_labels = setNames(var_imp_df$DataType, var_imp_df$y_pos)
-#pdf(file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/Figure5A.pdf", width=5, height=7)
-Figure5A = ggplot(var_imp_df, aes(x = Model, y = y_pos, fill = importance)) +
+#pdf(file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/Figure6A.pdf", width=5, height=7)
+Figure6A = ggplot(var_imp_df, aes(x = Model, y = y_pos, fill = importance)) +
   geom_tile(color = "white", linewidth = 0.2, width = 1.5, height = 0.9) +
   geom_text(aes(label = round(importance, 2)), color = "black", size = 2) +
   scale_fill_gradient2(low = "skyblue1", mid = "white", high = "dodgerblue4",
@@ -2503,7 +2617,7 @@ Figure5A = ggplot(var_imp_df, aes(x = Model, y = y_pos, fill = importance)) +
         axis.text.x = element_blank(),
         panel.grid = element_blank()
   )
-Figure5A
+Figure6A
 #dev.off()
 
 head(var_imp_df)
@@ -2519,7 +2633,7 @@ feature_type_imp
 
 #Model 2
 cat("\014")
-rm(list = setdiff(ls(), c("Figure5A")))
+rm(list = setdiff(ls(), c("Figure6A")))
 par(mfrow=c(1,1))
 data = read.csv("RhizovisionData2017_55&Friends.csv", header = TRUE, na.strings = "NA")
 head(data)
@@ -2644,24 +2758,24 @@ trait_description = tibble(
 var_imp_df = var_imp_df %>%
   left_join(trait_description, by = "variable")
 print(var_imp_df)
-Figure5B = ggplot(var_imp_df, aes(x = reorder(variable, importance), y = importance, fill = Description)) +
+Figure6B = ggplot(var_imp_df, aes(x = reorder(variable, importance), y = importance, fill = Description)) +
   geom_col() +
   scale_fill_manual(values = c("skyblue4","dodgerblue3","skyblue1"))+
   geom_text(aes(label = round(importance, 2)), 
-            hjust = -0.1,        # small offset to the right
-            size = 3) +          # text size
+            hjust = -0.1,     
+            size = 3) +         
   coord_flip() +
   labs(x = "", y = "Mean Decrease in Gini") +
   theme_minimal() +
   theme(
     panel.grid.major = element_blank(),
     panel.grid.minor = element_blank()) +
-  expand_limits(y = max(var_imp_df$importance) * 1.1)  # make room for text
+  expand_limits(y = max(var_imp_df$importance) * 1.1) 
 Figure5B
-#pdf(file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/Figure5.pdf", width=7, height=5)
+#pdf(file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/Figure6.pdf", width=7, height=5)
 ggdraw() +
-  draw_plot(Figure5A, x = 0, y = 0, width = 0.25, height = 1) +
-  draw_plot(Figure5B, x = 0.25, y = 0, width = 0.75, height = 1) +
+  draw_plot(Figure6A, x = 0, y = 0, width = 0.25, height = 1) +
+  draw_plot(Figure6B, x = 0.25, y = 0, width = 0.75, height = 1) +
   draw_plot_label(label = c("A", "B"), 
                   size = 10,
                   x = c(0,0.25), 
@@ -2670,7 +2784,7 @@ ggdraw() +
 
 
 
-#Root hairs positively impact root system stiffness ####
+#Root hairs have a limited impact on root system stiffness ####
 par(mfrow=c(1,1))
 cat("\014")
 rm(list=ls()) 
@@ -2705,7 +2819,7 @@ data = read.csv("SMURF_RootHairless.csv", header = TRUE, na.strings = "NA")
 head(data)
 unique(data$Genotype)
 data$Genotype = factor(data$Genotype, levels = c("wt","mt"))
-Figure6A = ggplot(data, aes(x = Genotype, y = line_raw_slope_N.m, fill = Genotype)) +
+Figure7A = ggplot(data, aes(x = Genotype, y = line_raw_slope_N.m, fill = Genotype)) +
   geom_boxplot()+
   ylab("Root System Stiffness (N/m)")+
   xlab(NULL)+
@@ -2720,7 +2834,7 @@ Figure6A = ggplot(data, aes(x = Genotype, y = line_raw_slope_N.m, fill = Genotyp
         axis.title = element_text(face="bold", size=10),
         axis.title.x = element_text(face="bold", size=10),
         axis.title.y = element_text(face="bold", size=10))
-Figure6A
+Figure7A
 attach(data)
 head(data)
 lm_x = lm(line_raw_slope_N.m ~ Genotype)
@@ -2728,10 +2842,10 @@ anova(lm_x)
 lm_x_aov=aov(lm_x) 
 X = HSD.test(lm_x_aov, trt = c("Genotype"), console = TRUE)
 Means = X$means
-#write.csv(Means, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS30a.csv", row.names = TRUE)
+#write.csv(Means, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS15a.csv", row.names = TRUE)
 Groups = X$groups
 Groups
-#write.csv(Groups, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS30b.csv", row.names = TRUE)
+#write.csv(Groups, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS15b.csv", row.names = TRUE)
 par(mfrow=c(2,2))
 plot(lm_x)
 par(mfrow=c(2,1))
@@ -2754,7 +2868,7 @@ head(df)
 unique(df$Geno)
 head(df)
 df$Geno = factor(df$Gen, levels = c("WT","Mut"))
-Figure6B = ggplot(df, aes(x = Geno, y = Width_mm, fill = Geno)) +
+Figure7B = ggplot(df, aes(x = Geno, y = Width_mm, fill = Geno)) +
   geom_boxplot()+
   ylab("Max Width (mm)")+
   xlab(NULL)+
@@ -2769,7 +2883,7 @@ Figure6B = ggplot(df, aes(x = Geno, y = Width_mm, fill = Geno)) +
         axis.title = element_text(face="bold", size=10),
         axis.title.x = element_text(face="bold", size=10),
         axis.title.y = element_text(face="bold", size=10))
-Figure6B
+Figure7B
 
 attach(df)
 head(df)
@@ -2779,9 +2893,9 @@ lm_x_aov=aov(lm_x)
 X = HSD.test(lm_x_aov, trt = c("Geno"), console = TRUE)
 Means = X$means
 Means
-#write.csv(Means, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS32a.csv", row.names = TRUE)
+#write.csv(Means, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS16a.csv", row.names = TRUE)
 Groups = X$groups
-#write.csv(Groups, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/TableS32b.csv", row.names = TRUE)
+#write.csv(Groups, file = "/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/TableS16b.csv", row.names = TRUE)
 Groups
 par(mfrow=c(2,2))
 plot(lm_x)
@@ -2873,10 +2987,11 @@ WTE_row = data.frame(
 plot_df = rbind(plot_df, WTE_row)
 data3 = rbind(WTE_row, mutE_row)
 
+
 head(df1_plot) #geno averages; 43&friends
 head(data2) #rth3 averages 
 head(data3) #rth3 predicted
-Figure6C = ggplot(plot_df, aes(x = width_mm, y = RSS)) +
+Figure7C = ggplot(plot_df, aes(x = width_mm, y = RSS)) +
   geom_point(data = df1_plot, color = "black", size = 2) +
   geom_smooth(data = df1_plot, method = "lm", se = TRUE, color = "black", fullrange = TRUE) +
   geom_point(data = data3, aes(color = Genotype, shape = Genotype), size = 3) +
@@ -2897,14 +3012,14 @@ Figure6C = ggplot(plot_df, aes(x = width_mm, y = RSS)) +
     axis.title.x = element_text(face = "bold", size = 10),
     axis.title.y = element_text(face = "bold", size = 10)
   )
-Figure6C
+Figure7C
 
 
-#pdf(file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2025/Figures/Figure6.pdf", width=7, height=5)
+#pdf(file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/Figure7.pdf", width=7, height=5)
 ggdraw() +
-  draw_plot(Figure6A, x = 0, y = 0.5, width = 0.5, height = 0.5) +
-  draw_plot(Figure6B, x = 0.5, y = 0.5, width = 0.5, height = 0.5) +
-  draw_plot(Figure6C, x = 0, y = 0, width = 1, height = 0.5) +
+  draw_plot(Figure7A, x = 0, y = 0.5, width = 0.5, height = 0.5) +
+  draw_plot(Figure7B, x = 0.5, y = 0.5, width = 0.5, height = 0.5) +
+  draw_plot(Figure7C, x = 0, y = 0, width = 1, height = 0.5) +
   draw_plot_label(label = c("A", "B","C"), 
                   size = 10,
                   x = c(0,0.5,0), 
