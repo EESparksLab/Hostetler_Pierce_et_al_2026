@@ -114,23 +114,6 @@ genotype_order = as.list(genotype_order)
 df$Genotype_ordered = ordered_genotypes
 head(df)
 df$SMURF_cat = factor(df$SMURF_cat, levels = c("low","average", "high"))
-Figure1A=ggplot(df, aes(x = Genotype_ordered, y = line_raw_slope_N.m, fill = SMURF_cat)) +
-  geom_boxplot()+
-  ylab("RSS (N/m)")+
-  xlab("Inbred Genotypes")+
-  scale_y_continuous(limits=c(0,8000), breaks=seq(0,8000,1000))+
-  scale_fill_manual(values = c("pink4","steelblue2", "burlywood"), labels = c("average" = "Moderate", "high" = "High", "low" = "Low"))+
-  labs(fill = "RSS Category")+
-  theme_bw()+
-  theme(legend.position = "none",
-    axis.text.x = element_text(size=8, angle = 60, hjust=1),
-    axis.text.y = element_text(size=8),
-    axis.text = element_text(size=8),
-    axis.title = element_text(face="bold", size=10),
-    axis.title.x = element_text(face="bold", size=10),
-    axis.title.y = element_text(face="bold", size=10))
-Figure1A
-head(df)
 
 #Experimental Design Summary
 summary_df = df %>%
@@ -190,7 +173,7 @@ Groups = Y$groups
 df$tukey = NULL
 detach(df)
 
-rm(list = setdiff(ls(), c("data", "df", "ordered_genotypes","Figure1A")))
+rm(list = setdiff(ls(), c("data", "df", "ordered_genotypes")))
 data1 = data %>%
   group_by(Genotype) %>%
   filter(n_distinct(Year) == 2) %>%
@@ -379,7 +362,7 @@ ggdraw() +
                   x = c(0,0,0), 
                   y = c(1,0.66,0.33))
 #dev.off()
-rm(list = setdiff(ls(), c("ordered_genotypes", "Figure1A")))
+rm(list = setdiff(ls(), c("ordered_genotypes")))
 
 data = read.csv("SMURFDatabase.csv", header = TRUE, na.strings = "NA")
 data = subset(data, Year == "2021")
@@ -389,9 +372,9 @@ df2 = read.csv("SMURFClassifications.csv", header = TRUE, na.strings = "NA")
 data = merge(data, df2, by = "Genotype")
 head(data)
 data$PL_cat = factor(data$PL_cat, levels = c("low","mid", "high"))
-Figure1C = ggplot(data, aes(x = PL_cat, y = line_raw_slope_N.m, fill = PL_cat)) +
+Figure1B = ggplot(data, aes(x = PL_cat, y = line_raw_slope_N.m, fill = PL_cat)) +
   geom_boxplot()+
-  scale_fill_manual(values = c("low" = "lightblue1", "mid" = "lightblue3", "high" = "lightblue4"), 
+  scale_fill_manual(values = c("low" = "gray90", "mid" = "gray50", "high" = "gray30"), 
                     labels = c("low" = "Low", "mid" = "Moderate", "high" = "Severe")) +
   ylab("RSS (N/m)")+
   xlab("Percent Lodging Category")+
@@ -406,7 +389,7 @@ Figure1C = ggplot(data, aes(x = PL_cat, y = line_raw_slope_N.m, fill = PL_cat)) 
     axis.title = element_text(face="bold", size=10),
     axis.title.x = element_text(face="bold", size=10),
     axis.title.y = element_text(face="bold", size=10))
-Figure1C
+Figure1B
 
 #Stats
 attach(data)
@@ -456,24 +439,24 @@ genotype_levels = levels(ordered_genotypes)
 data$Genotype_ordered = factor(data$Genotype, levels = genotype_levels)
 head(data)
 unique(data$Year)
-Figure1B = ggplot(data, aes(x = Genotype_ordered, y = line_raw_slope_N.m, fill = PL_cat)) +
+Figure1A = ggplot(data, aes(x = Genotype_ordered, y = line_raw_slope_N.m, fill = PL_cat)) +
   geom_boxplot()+
-  scale_fill_manual(values = c("low" = "lightblue1", "mid" = "lightblue3", "high" = "lightblue4"), 
+  scale_fill_manual(values = c("low" = "gray90", "mid" = "gray50", "high" = "gray30"), 
                     labels = c("low" = "Low", "mid" = "Moderate", "high" = "Severe")) +
   ylab("RSS (N/m)")+
   xlab("Inbred Genotypes")+
   scale_x_discrete(labels = c("low" = "Low", "mid" = "Moderate", "high" = "Severe")) +
-  labs(fill = "PLL Category") +
+  labs(fill = "PL Category") +
   scale_y_continuous(limits=c(0,8000), breaks=seq(0,8000,1000))+
   theme_bw()+
-  theme(legend.position = "none",
+  theme(legend.position = "top",
     axis.text.x = element_text(size=8, angle = 60, hjust=1),
     axis.text.y = element_text(size=8),
     axis.text = element_text(size=8),
     axis.title = element_text(face="bold", size=10),
     axis.title.x = element_text(face="bold", size=10),
     axis.title.y = element_text(face="bold", size=10))
-Figure1B
+Figure1A
 head(data)
 data_pct = data %>%
   count(SMURF_cat, PL_cat) %>%
@@ -484,11 +467,11 @@ data_pct = data %>%
     label = ifelse(prop < 0.05, "", label))
 data_pct$PL_cat = factor(data_pct$PL_cat, levels = c("high","mid", "low"))
 data_pct$SMURF_cat = factor(data_pct$SMURF_cat, levels = c("low","average", "high"))
-Figure1D = ggplot(data_pct, aes(x = SMURF_cat, y = n, fill = PL_cat)) +
+Figure1C = ggplot(data_pct, aes(x = SMURF_cat, y = n, fill = PL_cat)) +
   geom_col(position = "fill") +
   geom_text(aes(label = label),position = position_fill(vjust = 0.5),size = 3,color = "black") +
   scale_y_continuous(labels = scales::percent) +
-  scale_fill_manual(values = c("low" = "lightblue1","mid" = "lightblue3","high" = "lightblue4"),
+  scale_fill_manual(values = c("low" = "gray90", "mid" = "gray50", "high" = "gray30"),
     labels = c("low" = "Low","mid" = "Moderate","high" = "Severe")) +
   scale_x_discrete(labels = c("low" = "Low", "average" = "Moderate","high" = "High")) +
   labs(
@@ -503,19 +486,18 @@ Figure1D = ggplot(data_pct, aes(x = SMURF_cat, y = n, fill = PL_cat)) +
     axis.title = element_text(face="bold", size=10),
     axis.title.x = element_text(face="bold", size=10),
     axis.title.y = element_text(face="bold", size=10))
-Figure1D
-pdf(file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/Figure1.pdf", width=8, height=6)
+Figure1C
+#pdf(file="/Users/ashley/Desktop/DataDump_ManuscriptSubmission/Figures/Figure1.pdf", width=8, height=6)
 ggdraw() +
-  draw_plot(Figure1A, x = 0, y = 0.66, width = 1, height = 0.33) +
-  draw_plot(Figure1B, x = 0, y = 0.33, width = 1, height = 0.33) +
-  draw_plot(Figure1C, x = 0, y = 0, width = 0.50, height = 0.33) +
-  draw_plot(Figure1D, x = 0.50, y = 0, width = 0.50, height = 0.33) +
-  draw_plot_label(label = c("A", "B", "C","D"), 
+  draw_plot(Figure1A, x = 0, y = 0.33, width = 1, height = 0.66) +
+  draw_plot(Figure1B, x = 0, y = 0, width = 0.50, height = 0.33) +
+  draw_plot(Figure1C, x = 0.50, y = 0, width = 0.50, height = 0.33) +
+  draw_plot_label(label = c("A", "B", "C"), 
                   size = 10,
-                  x = c(0,0,0,0.5), 
-                  y = c(1,0.66,0.33,0.33))
+                  x = c(0,0,0.50), 
+                  y = c(1,0.33,0.33))
 dev.off()
-rm(list=ls())
+#rm(list=ls())
 
 #Larger below- and above-ground root systems are associated with higher root system stiffness####
 par(mfrow=c(1,1))
@@ -1436,18 +1418,18 @@ Figure3A = autoplot(pca, data = data2, colour="SMURF_cat",
   theme(legend.position = "none",
         legend.text = element_text(size = 8))
 
-#pdf(file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/Figure3.pdf", width=7, height=5)
+#pdf(file="/Users/ashley/Desktop/DataDump_ManuscriptSubmission/Figures/Figure3.pdf", width=7, height=5)
 ggdraw() +
   draw_plot(Figure3A, x = 0, y = 0.725, width = 0.33, height = 0.25) +
   draw_plot(Figure3B, x = 0.33, y = 0.725, width = 0.33, height = 0.25) +
-  draw_plot(Figure3C, x = 0.66, y = 0.725, width = 0.33, height = 0.25) +
-  draw_plot(Figure3D, x = 0, y = 0.45, width = 0.33, height = 0.25) +
-  draw_plot(Figure3E, x = 0.33, y = 0.45, width = 0.33, height = 0.25) +
-  draw_plot(Figure3F, x = 0.66, y = 0.45, width = 0.33, height = 0.25) +
+  draw_plot(Figure3C, x = 0, y = 0.45, width = 0.33, height = 0.25) +
+  draw_plot(Figure3D, x = 0.33, y = 0.45, width = 0.33, height = 0.25) +
+  draw_plot(Figure3E, x = 0, y = 0.175, width = 0.33, height = 0.25) +
+  draw_plot(Figure3F, x = 0.33, y = 0.175, width = 0.33, height = 0.25) +
   draw_plot_label(label = c("A", "B", "C", "D","E","F"), 
                   size = 10,
-                  x = c(0,0.33,0.66,0,0.33,0.66), 
-                  y = c(1,1,1,0.75,0.75,0.75))
+                  x = c(0,0.33,0,0.33,0,0.33), 
+                  y = c(1,1,0.75,0.75,0.475,0.475))
 #dev.off()
 rm(list=ls()) 
 
@@ -1583,7 +1565,7 @@ data$SMURF_cat = factor(data$SMURF_cat, levels = c("low","average", "high"))
 Figure4A = ggplot(data, aes(x = SMURF_cat, y = DAP, fill = SMURF_cat)) +
   geom_boxplot()+
   ylab("Brace Root Emergence (dap)")+
-  xlab(NULL)+
+  xlab("Root System Stiffness Categories")+
   expand_limits(y = 0)+
   scale_x_discrete(labels = c("low" = "Low", 
                               "average" = "Moderate", 
@@ -1645,29 +1627,10 @@ detach(data)
 
 head(data)
 data$Leaf.count = as.numeric(data$Leaf.count)
-Figure4B = ggplot(data, aes(x = SMURF_cat, y = Leaf.count, fill = SMURF_cat)) +
-  geom_boxplot()+
-  ylab("Leaf Number (count)")+
-  xlab(NULL)+
-  expand_limits(y = 0)+
-  scale_x_discrete(labels = c("low" = "Low", 
-                              "average" = "Moderate", 
-                              "high" = "High"))+
-  scale_fill_manual(values = c("pink4","steelblue2", "burlywood"), labels = c("average" = "Moderate", "high" = "High", "low" = "Low"))+
-  labs(fill = "RSS Category")+
-  theme_bw()+
-  theme(legend.position = "none",
-        axis.text.x = element_text(size=8),
-        axis.text.y = element_text(size=8),
-        axis.text = element_text(size=8),
-        axis.title = element_text(face="bold", size=8),
-        axis.title.x = element_text(face="bold", size=8),
-        axis.title.y = element_text(face="bold", size=8))
-Figure4C = ggplot(data, aes(x = DAP, y = Leaf.count, color = SMURF_cat)) +
-  geom_point(size=1)+
-  ylab("Leaf Number (count)")+
-  xlab("Brace Root Emergence (dap)")+
-  expand_limits(y = 0, x=0)+
+Figure4B = ggplot(data, aes(x = DAP, y = Leaf.count, color = SMURF_cat)) +
+  geom_point(size=1.5)+
+  ylab("Leaf Stage at Emergence")+
+  xlab("BR Emergence (dap)")+
   scale_color_manual(values = c("pink4","steelblue2", "burlywood"), labels = c("average" = "Moderate", "high" = "High", "low" = "Low"))+
   labs(color = "RSS Category")+
   theme_bw()+
@@ -1678,7 +1641,7 @@ Figure4C = ggplot(data, aes(x = DAP, y = Leaf.count, color = SMURF_cat)) +
         axis.title = element_text(face="bold", size=8),
         axis.title.x = element_text(face="bold", size=8),
         axis.title.y = element_text(face="bold", size=8))
-
+Figure4B
 head(data)
 attach(data)
 head(data)
@@ -1746,11 +1709,10 @@ colnames(df1)[2] = "ConvexArea_cm2"
 colnames(df1)[6] = "BR_Emergence_DAP"
 df1$SMURF_cat = factor(df1$SMURF_cat, levels = c("low","average", "high"))
 
-Figure4D = ggplot(df1, aes(x = BR_Emergence_DAP, y = ConvexArea_cm2, color = SMURF_cat)) +
-  geom_point(size=1)+
+Figure4C = ggplot(df1, aes(x = BR_Emergence_DAP, y = ConvexArea_cm2, color = SMURF_cat)) +
+  geom_point(size=1.5)+
   ylab("Convex Area (cm2)")+
   xlab("Brace Root Emergence (dap)")+
-  expand_limits(y = 0, x=0)+
   scale_color_manual(values = c("pink4","steelblue2", "burlywood"), labels = c("average" = "Moderate", "high" = "High", "low" = "Low"))+
   labs(color = "RSS Category")+
   theme_bw()+
@@ -1760,20 +1722,20 @@ Figure4D = ggplot(df1, aes(x = BR_Emergence_DAP, y = ConvexArea_cm2, color = SMU
         axis.text = element_text(size=8),
         axis.title = element_text(face="bold", size=8),
         axis.title.x = element_text(face="bold", size=8),
-        axis.title.y = element_text(face="bold", size=8))+
-  facet_grid(~SMURF_cat, labeller = as_labeller(c( average = "Moderate", high = "High", low = "Low")))
-Figure4D
+        axis.title.y = element_text(face="bold", size=8))
 
-#pdf(file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/Figure4.pdf", width=8, height=6)
+cor(df1$BR_Emergence_DAP, df1$ConvexArea_cm2, use = "complete.obs")
+Figure4C
+
+#pdf(file="/Users/ashley/Desktop/DataDump_ManuscriptSubmission/Figures/Figure4.pdf", width=4, height=6)
 ggdraw() +
-  draw_plot(Figure4A, x = 0, y = 0.70, width = 0.33, height = 0.25) +
-  draw_plot(Figure4B, x = 0.35, y = 0.70, width = 0.33, height = 0.25) +
-  draw_plot(Figure4C, x = 0, y = 0.40, width = 0.33, height = 0.25) +
-  draw_plot(Figure4D, x = 0.35, y = 0.40, width = 0.33, height = 0.25) +
-  draw_plot_label(label = c("A", "B", "C", "D"), 
+  draw_plot(Figure4A, x = 0, y = 0.60, width = 0.33, height = 0.33) +
+  draw_plot(Figure4B, x = 0.33, y = 0.60, width = 0.33, height = 0.33) +
+  draw_plot(Figure4C, x = 0.66, y = 0.60, width = 0.33, height = 0.33) +
+  draw_plot_label(label = c("A", "B", "C"), 
                   size = 10,
-                  x = c(0,0.34,0,0.34), 
-                  y = c(1,1,0.70,0.70))
+                  x = c(0,0.33,0.66), 
+                  y = c(1,1,1))
 #dev.off()
 
 #Brace root structural stiffness is associated with root system stiffness and driven by the changes in geometry #####
@@ -2348,7 +2310,7 @@ Figure5B = ggplot(df4, aes(x = SMURF_cat, y = I_mm4, fill = SMURF_cat)) +
         axis.title = element_text(face="bold", size=10),
         axis.title.x = element_text(face="bold", size=10),
         axis.title.y = element_text(face="bold", size=10))
-#pdf(file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/Figure5.pdf", width=8, height=6)
+#pdf(file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/Figures/Figure5.pdf", width=3.54, height=2.1)
 ggdraw() +
   draw_plot(Figure5A, x = 0, y = 0.65, width = 0.33, height = 0.33) +
   draw_plot(Figure5B, x = 0.33, y = 0.65, width = 0.33, height = 0.33) +
@@ -2784,7 +2746,7 @@ ggdraw() +
 
 
 
-#Root hairs have a limited impact on root system stiffness ####
+#Root hairs alter root system stiffness through modulating root system size ####
 par(mfrow=c(1,1))
 cat("\014")
 rm(list=ls()) 
@@ -3024,4 +2986,86 @@ ggdraw() +
                   size = 10,
                   x = c(0,0.5,0), 
                   y = c(1,1,0.5))
+#dev.off()
+
+
+
+#Discussion: Figure S11####
+par(mfrow=c(1,1))
+cat("\014")
+rm(list=ls()) 
+getwd()
+data = read.csv("2019PC_Height.csv", header = TRUE, na.strings = "NA")
+head(data)
+data = data[,c(1,4)]
+data2 = read.csv("Unique_55Genotypes_Plots.csv", header = TRUE, na.strings = "NA")
+head(data2)
+data = merge(data, data2, by = "Plot")
+head(data)
+data = data[,c(3,2)]
+df2 = read.csv("SMURFClassifications.csv", header = TRUE, na.strings = "NA")
+data_pl = read.csv("LodgingData_55&Friends.csv", header = TRUE, na.strings = "NA")
+data = merge(data, data_pl, by = "Genotype")
+data = merge(data, df2, by = "Genotype")
+head(data)
+data0 = data
+data = subset(data, SMURF_cat == "high")
+data$PL_cat = factor(data$PL_cat, levels = c("low","mid", "high"))
+head(data)
+ordered_genotypes = with(data, reorder(Genotype, height.cm., function(x) mean(x, na.rm = TRUE)))
+genotype_order = levels(ordered_genotypes)
+genotype_order = as.list(genotype_order)
+data$Genotype_ordered = ordered_genotypes
+FigureS11B = ggplot(data, aes(x = Genotype_ordered, y = height.cm., fill = PL_cat)) +
+  geom_boxplot()+
+  scale_fill_manual(values = c("low" = "gray90", "mid" = "gray50", "high" = "gray30"),
+                    labels = c("low" = "Low","mid" = "Moderate","high" = "Severe")) +
+  labs(
+    y = "Plant Height (cm)",
+    x = NULL,
+    fill = "Root Lodging Susceptibility") +
+  scale_y_continuous(limits = c(100, 350), breaks = seq(100, 350, 25)) +
+  theme_bw() +
+  theme(legend.position = "none",
+    axis.text.x = element_blank(),
+    axis.text.y = element_text(size = 8),
+    axis.text = element_text(size = 8),
+    axis.title = element_text(face = "bold", size = 10),
+    axis.title.x = element_text(face = "bold", size = 10),
+    axis.title.y = element_text(face = "bold", size = 10))
+FigureS11B
+data = subset(data0, SMURF_cat == "low")
+data$PL_cat = factor(data$PL_cat, levels = c("low","mid", "high"))
+ordered_genotypes = with(data, reorder(Genotype, height.cm., function(x) mean(x, na.rm = TRUE)))
+genotype_order = levels(ordered_genotypes)
+genotype_order = as.list(genotype_order)
+data$Genotype_ordered = ordered_genotypes
+FigureS11A = ggplot(data, aes(x = Genotype_ordered, y = height.cm., fill = PL_cat)) +
+  geom_boxplot()+
+  scale_fill_manual(values = c("low" = "gray90", "mid" = "gray50", "high" = "gray30"),
+                    labels = c("low" = "Low","mid" = "Moderate","high" = "Severe")) +
+  scale_y_continuous(limits = c(100, 350), breaks = seq(100, 350, 25)) +
+  labs(
+    y = "Plant Height (cm)",
+    x = NULL,
+    fill = "Root Lodging Susceptibility") +
+  theme_bw() +
+  theme(legend.position = "none",
+        axis.text.x = element_blank(),
+        axis.text.y = element_text(size = 8),
+        axis.text = element_text(size = 8),
+        axis.title = element_text(face = "bold", size = 10),
+        axis.title.x = element_text(face = "bold", size = 10),
+        axis.title.y = element_text(face = "bold", size = 10))
+FigureS11A
+
+
+#pdf(file="/Users/ashley/Desktop/Hostetler_Pierce_et_al_2026/SupplementalData/FigureS11.pdf", width=7, height=5)
+ggdraw() +
+  draw_plot(FigureS11A, x = 0, y = 0.5, width = 0.5, height = 0.5) +
+  draw_plot(FigureS11B, x = 0.5, y = 0.5, width = 0.5, height = 0.5) +
+  draw_plot_label(label = c("A", "B"), 
+                  size = 10,
+                  x = c(0,0.5), 
+                  y = c(1,1))
 #dev.off()
