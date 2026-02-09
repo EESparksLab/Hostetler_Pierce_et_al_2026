@@ -1,0 +1,398 @@
+---
+title: "Hostetler, Pierce et al. (2026) — Random Forest Models (SMURF Classification)"
+author: "Reviewer Instructions"
+date: "`r format(Sys.Date(), '%Y-%m-%d')`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    number_sections: true
+---
+
+# Overview
+
+This document describes how to **run predictions and evaluate** the Random Forest classification models used in *Hostetler, Pierce et al. (2026)* for predicting SMURF root phenotype categories (`smurf_cat`) from RhizoVision and trait datasets.
+
+The trained model artifacts are provided as `.rds` files (R serialized objects) and can be used for **direct prediction and evaluation on new data**, without retraining.
+
+## Contents expected in the package/repository
+
+### Model artifacts ("weights")
+- `model1_final_fit_workflow.rds`
+- `model2_final_fit_workflow.rds`
+
+These are the **complete trained tidymodels workflow objects**, including:
+- preprocessing recipe
+- trained Random Forest model
+
+Optional (if provided):
+- `model1_randomForest_object.rds`
+- `model2_randomForest_object.rds`
+
+### Schema files
+- `model1_required_columns.txt`
+- `model2_required_columns.txt`
+
+These list the **exact predictor column names required** at prediction time.
+
+### Scripts
+- `reviewer_predict.R`
+- `reviewer_evaluate.R`
+
+### Reproducibility metadata
+- `model1_sessionInfo.txt`
+- `model2_sessionInfo.txt`
+
+# Software requirements
+
+This workflow requires **R** (recommended ≥ 4.2.0) and the following packages:
+
+- `tidymodels`
+- `randomForest`
+- `readr`
+- `dplyr`
+- `janitor`
+- `tibble`
+- `rlang`
+
+## Install packages
+
+```{r install-packages, eval=FALSE}
+install.packages(c(
+  "tidymodels",
+  "randomForest",
+  "readr",
+  "dplyr",
+  "janitor",
+  "tibble",
+  "rlang"
+))
+```
+
+# Important input data rules
+
+## Column naming
+
+All input CSVs are cleaned using:
+
+```r
+janitor::clean_names()
+```
+
+This converts column names to lowercase snake_case and removes special characters.
+
+**Therefore, your CSV header names must match the expected schema after `clean_names()`.**
+
+## Missing values
+
+The trained workflow includes preprocessing steps:
+- Numeric predictors: **mean imputation**
+- Categorical predictors: **mode imputation**
+- String predictors: **converted to factors**
+
+Missing values are allowed.
+
+# Model training summary (informational)
+
+Both models were trained as Random Forest classifiers using `tidymodels`:
+
+- Engine: `randomForest`
+- Mode: classification
+- Trees: 1000
+- Hyperparameters tuned:
+  - `mtry` in {3,4,5,6,7}
+  - `min_n` in {1,2,3,4,5}
+- Cross-validation: 5-fold CV, 3 repeats
+- Best model selected using: **accuracy**
+- Data split: 80% train / 20% test stratified by `smurf_cat`
+
+# Running predictions on new data
+
+## Prediction-only (no labels required)
+
+### Input format
+
+Provide a CSV containing **all predictor columns required** by the model.
+
+The authoritative predictor list is stored in:
+- `model1_required_columns.txt`
+- `model2_required_columns.txt`
+
+### Command-line usage
+
+```bash
+Rscript reviewer_predict.R model2_final_fit_workflow.rds model2_required_columns.txt reviewer_data.csv predictions.csv
+```
+
+This writes `predictions.csv` containing:
+- predictor columns
+- `.pred_class` (predicted class)
+- class probabilities (if supported by the model)
+
+## Evaluate on labeled data (optional)
+
+### Input format
+
+Provide a CSV containing:
+- all required predictors
+- ground-truth label column: `smurf_cat`
+
+### Command-line usage
+
+```bash
+Rscript reviewer_evaluate.R model2_final_fit_workflow.rds model2_required_columns.txt reviewer_labeled.csv
+```
+
+This prints:
+- confusion matrix
+- standard classification metrics (including accuracy)
+- ROC AUC if binary outcomes and probabilities are available
+
+# Model 2 explicit schema (RhizoVision subset model)
+
+Model 2 expects the following predictors (after `clean_names()`):
+
+1. `solidity`
+2. `max_diameter_cm`
+3. `steep_angle_frequency`
+4. `surface_area_cm2`
+5. `convex_area_cm2`
+6. `network_area_cm2`
+7. `lower_root_area_cm2`
+8. `max_width_cm`
+9. `medium_angle_frequency`
+10. `total_rl_cm`
+11. `depth_cm`
+12. `volume_cm3`
+13. `perimeter_cm`
+14. `median_diameter_cm`
+15. `average_diameter_cm`
+
+Label column (for evaluation only):
+- `smurf_cat`
+
+# Notes on Model 1 schema
+
+Model 1 is trained on a merged dataset containing multiple trait sources and is column-subset by index during preprocessing.
+
+Because of this, the authoritative predictor list is provided in:
+- `model1_required_columns.txt`
+
+Reviewers should rely on that file rather than manually guessing predictors.
+
+# Appendix A — reviewer_predict.R (full script)
+
+Save the following as `reviewer_predict.R`:
+
+```{r reviewer-predict, eval=FALSE}
+#!/usr/bin/env Rscript
+
+suppressPackageStartupMessages({
+  library(tidymodels)
+  library(readr)
+  library(dplyr)
+  library(janitor)
+})
+
+args <- commandArgs(trailingOnly = TRUE)
+
+if (length(args) < 4) {
+  cat("\nUsage:\n")
+  cat("  Rscript reviewer_predict.R <model_rds> <required_cols_txt> <input_csv> <output_csv>\n\n")
+  cat("Example:\n")
+  cat("  Rscript reviewer_predict.R model2_final_fit_workflow.rds model2_required_columns.txt reviewer_data.csv predictions.csv\n\n")
+  quit(status = 1)
+}
+
+model_path <- args[1]
+cols_path  <- args[2]
+input_csv  <- args[3]
+output_csv <- args[4]
+
+# Load model + schema
+if (!file.exists(model_path)) stop("Model file not found: ", model_path)
+if (!file.exists(cols_path))  stop("Required columns file not found: ", cols_path)
+if (!file.exists(input_csv))  stop("Input CSV not found: ", input_csv)
+
+final_fit <- readRDS(model_path)
+required_cols <- readLines(cols_path)
+
+if (length(required_cols) == 0) stop("Required columns file is empty: ", cols_path)
+
+# Read and clean input
+new_data <- readr::read_csv(input_csv, show_col_types = FALSE) %>%
+  janitor::clean_names()
+
+missing <- setdiff(required_cols, names(new_data))
+extra   <- setdiff(names(new_data), required_cols)
+
+if (length(missing) > 0) {
+  stop(
+    paste0(
+      "Missing required columns (after clean_names()):\n  ",
+      paste(missing, collapse = ", "),
+      "\n\nTip: ensure your CSV header matches the schema file."
+    )
+  )
+}
+
+# Keep only required columns, in the exact schema order
+X <- new_data %>% dplyr::select(dplyr::all_of(required_cols))
+
+# Predict class
+pred_class <- predict(final_fit, X, type = "class")
+
+# Predict probabilities (if supported)
+pred_prob <- tryCatch(
+  predict(final_fit, X, type = "prob"),
+  error = function(e) NULL
+)
+
+out <- dplyr::bind_cols(X, pred_class)
+if (!is.null(pred_prob)) out <- dplyr::bind_cols(out, pred_prob)
+
+readr::write_csv(out, output_csv)
+
+cat("\nPrediction complete.\n")
+cat("Model:  ", model_path, "\n")
+cat("Input:  ", input_csv, "\n")
+cat("Output: ", output_csv, "\n")
+
+if (length(extra) > 0) {
+  cat("\nNote: the following extra columns were ignored:\n  ")
+  cat(paste(extra, collapse = ", "))
+  cat("\n")
+}
+cat("\n")
+```
+
+# Appendix B — reviewer_evaluate.R (full script)
+
+Save the following as `reviewer_evaluate.R`:
+
+```{r reviewer-evaluate, eval=FALSE}
+#!/usr/bin/env Rscript
+
+suppressPackageStartupMessages({
+  library(tidymodels)
+  library(readr)
+  library(dplyr)
+  library(janitor)
+  library(rlang)
+})
+
+args <- commandArgs(trailingOnly = TRUE)
+
+if (length(args) < 3) {
+  cat("\nUsage:\n")
+  cat("  Rscript reviewer_evaluate.R <model_rds> <required_cols_txt> <labeled_csv>\n\n")
+  cat("Example:\n")
+  cat("  Rscript reviewer_evaluate.R model2_final_fit_workflow.rds model2_required_columns.txt reviewer_labeled.csv\n\n")
+  cat("The labeled CSV must include the ground-truth column: smurf_cat\n\n")
+  quit(status = 1)
+}
+
+model_path <- args[1]
+cols_path  <- args[2]
+input_csv  <- args[3]
+
+# Load model + schema
+if (!file.exists(model_path)) stop("Model file not found: ", model_path)
+if (!file.exists(cols_path))  stop("Required columns file not found: ", cols_path)
+if (!file.exists(input_csv))  stop("Input CSV not found: ", input_csv)
+
+final_fit <- readRDS(model_path)
+required_cols <- readLines(cols_path)
+
+if (length(required_cols) == 0) stop("Required columns file is empty: ", cols_path)
+
+# Read and clean data
+df <- readr::read_csv(input_csv, show_col_types = FALSE) %>%
+  janitor::clean_names()
+
+if (!("smurf_cat" %in% names(df))) {
+  stop(
+    "Evaluation requires a ground-truth column named 'smurf_cat' (after clean_names()).\n",
+    "Add a column smurf_cat to your CSV to compute confusion matrix + metrics."
+  )
+}
+
+# Ensure label is categorical
+df <- df %>% dplyr::mutate(smurf_cat = as.factor(smurf_cat))
+
+missing <- setdiff(required_cols, names(df))
+if (length(missing) > 0) {
+  stop(
+    paste0(
+      "Missing required predictor columns (after clean_names()):\n  ",
+      paste(missing, collapse = ", "),
+      "\n\nTip: ensure your CSV header matches the schema file."
+    )
+  )
+}
+
+X <- df %>% dplyr::select(dplyr::all_of(required_cols))
+y <- df %>% dplyr::select(smurf_cat)
+
+# Predict class
+pred_class <- predict(final_fit, X, type = "class")
+preds <- dplyr::bind_cols(y, pred_class)
+
+cat("\nConfusion matrix:\n")
+print(conf_mat(preds, truth = smurf_cat, estimate = .pred_class))
+
+cat("\nMetrics:\n")
+print(metrics(preds, truth = smurf_cat, estimate = .pred_class))
+
+# If probability predictions are available, compute ROC AUC for binary outcomes only
+pred_prob <- tryCatch(
+  predict(final_fit, X, type = "prob"),
+  error = function(e) NULL
+)
+
+if (!is.null(pred_prob)) {
+  classes <- levels(df$smurf_cat)
+  if (length(classes) == 2) {
+    # parsnip names prob columns like .pred_<level>
+    pos_level <- classes[2]
+    prob_col <- paste0(".pred_", pos_level)
+
+    if (prob_col %in% names(pred_prob)) {
+      roc_df <- dplyr::bind_cols(y, pred_prob)
+      cat("\nROC AUC (binary only):\n")
+      print(roc_auc(roc_df, truth = smurf_cat, !!rlang::sym(prob_col)))
+    }
+  }
+}
+
+cat("\nEvaluation complete.\n")
+cat("Model: ", model_path, "\n")
+cat("Data:  ", input_csv, "\n\n")
+```
+
+# Appendix C — How to export the trained model artifacts (for authors)
+
+If you are the model author and need to export the trained workflow object ("weights") and schema files, add the following **after** creating `final_fit` in your training script:
+
+```{r export-artifacts, eval=FALSE}
+# Save the complete trained workflow (recommended artifact)
+saveRDS(final_fit, file = "MODELNAME_final_fit_workflow.rds")
+
+# Export the exact predictor schema expected at prediction time
+rec <- workflows::extract_recipe(final_fit)
+req_cols <- rec$var_info %>%
+  dplyr::filter(role == "predictor") %>%
+  dplyr::pull(variable) %>%
+  as.character()
+
+writeLines(req_cols, con = "MODELNAME_required_columns.txt")
+
+# Optional: export the raw randomForest object too
+rf_model_obj <- final_fit %>% parsnip::extract_fit_parsnip() %>% .$fit
+saveRDS(rf_model_obj, file = "MODELNAME_randomForest_object.rds")
+
+# Record package versions
+writeLines(capture.output(sessionInfo()), "MODELNAME_sessionInfo.txt")
+```
+
+Replace `MODELNAME` with `model1` and/or `model2`.

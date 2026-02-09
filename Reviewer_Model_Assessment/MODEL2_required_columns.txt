@@ -1,0 +1,15 @@
+lower_root_area_cm2
+solidity
+total_rl_cm
+convex_area_cm2
+depth_cm
+max_width_cm
+network_area_cm2
+average_diameter_cm
+max_diameter_cm
+medium_angle_frequency
+median_diameter_cm
+perimeter_cm
+steep_angle_frequency
+surface_area_cm2
+volume_cm3
