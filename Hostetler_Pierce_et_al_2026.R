@@ -2500,6 +2500,27 @@ final_wf = workflow() %>%
   add_recipe(rf_recipe) %>%
   add_model(final_rf)
 final_fit = final_wf %>% fit(data = plant_train)
+
+
+# --- EXPORT TRAINED MODEL ("WEIGHTS") ---
+saveRDS(final_fit, file = "MODEL1_final_fit_workflow.rds")
+
+# Export the exact predictor schema expected at prediction time
+rec <- workflows::extract_recipe(final_fit)
+req_cols <- rec$var_info %>%
+  dplyr::filter(role == "predictor") %>%
+  dplyr::pull(variable) %>%
+  as.character()
+
+writeLines(req_cols, con = "MODEL1_required_columns.txt")
+
+# export the raw randomForest object too
+rf_model_obj <- workflows::extract_fit_parsnip(final_fit)$fit
+saveRDS(rf_model_obj, file = "MODEL1_randomForest_object.rds")
+
+# Record package versions
+writeLines(capture.output(sessionInfo()), "MODEL1_sessionInfo.txt")
+
 predictions = predict(final_fit, plant_test) %>% 
   bind_cols(plant_test)
 predictions
@@ -2655,6 +2676,27 @@ final_wf = workflow() %>%
   add_recipe(rf_recipe) %>%
   add_model(final_rf)
 final_fit = final_wf %>% fit(data = plant_train)
+
+# --- EXPORT TRAINED MODEL ("WEIGHTS") ---
+saveRDS(final_fit, file = "MODEL2_final_fit_workflow.rds")
+
+# Export the exact predictor schema expected at prediction time
+rec <- workflows::extract_recipe(final_fit)
+req_cols <- rec$var_info %>%
+  dplyr::filter(role == "predictor") %>%
+  dplyr::pull(variable) %>%
+  as.character()
+
+writeLines(req_cols, con = "MODEL2_required_columns.txt")
+
+# export the raw randomForest object too
+rf_model_obj <- workflows::extract_fit_parsnip(final_fit)$fit
+saveRDS(rf_model_obj, file = "MODEL2_randomForest_object.rds")
+
+# Record package versions
+writeLines(capture.output(sessionInfo()), "MODEL2_sessionInfo.txt")
+
+
 predictions = predict(final_fit, plant_test) %>% 
   bind_cols(plant_test)
 predictions
